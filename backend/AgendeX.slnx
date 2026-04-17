@@ -2,6 +2,6 @@
   <Project Path="AgendeX.Application/AgendeX.Application.csproj" Id="e1acdc02-8e7e-4a70-b759-a92720a605d8" />
   <Project Path="AgendeX.Domain/AgendeX.Domain.csproj" Id="39b111c2-8208-4753-bae1-2a78ed522bee" />
   <Project Path="AgendeX.Infrastructure/AgendeX.Infrastructure.csproj" Id="4b401000-8529-4408-98f4-2e1929f8dba4" />
-  <Project Path="AgendeX.Tests/AgendeX.Tests.csproj" Id="98e2824b-97fc-4e09-922e-c4a36887bc49" />
+  <Project Path="AgendeX.Tests/AgendeX.Tests.csproj" Id="7dd83898-a2f8-4eae-8941-084a7e1e3197" />
   <Project Path="AgendeX.WebAPI/AgendeX.WebAPI.csproj" />
 </Solution>

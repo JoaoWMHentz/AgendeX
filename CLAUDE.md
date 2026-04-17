@@ -207,6 +207,78 @@ Confirmado
 - Tabela ordenável por qualquer coluna
 - Acesso: Administrador (completo) e Atendente (restrito aos seus dados)
 
+## Arquitetura Clean Architecture — Camadas e Responsabilidades
+
+### Domain Layer
+- Contém a lógica de negócio da empresa (enterprise/business logic)
+- Entidades, Value Objects, Domain Events, Interfaces, regras de negócio
+- **Sem dependências em outras camadas**
+- Estrutura: `AgendeX.Domain/Entities/`, `AgendeX.Domain/Interfaces/`
+
+### Application Layer
+- Contém a lógica de aplicação (use cases)
+- DTOs, interfaces de serviço, handlers MediatR, validators
+- **Depende apenas do Domain**
+- Estrutura: `AgendeX.Application/DTOs/`, `AgendeX.Application/Interfaces/`, `AgendeX.Application/UseCases/`
+
+### Infrastructure Layer
+- Implementa as interfaces definidas no Domain/Application
+- DbContext (EF Core), repositórios, serviços externos, JWT, migrations
+- **Depende do Domain e Application**
+- Estrutura: `AgendeX.Infrastructure/Data/`, `AgendeX.Infrastructure/Repositories/`
+
+### WebAPI Layer
+- Controllers, middlewares, configuração do Swagger, Program.cs
+- **Depende apenas do Application** (nunca referencia Domain ou Infrastructure diretamente)
+- Estrutura: `AgendeX.WebAPI/Controllers/`, `AgendeX.WebAPI/Middlewares/`
+
+### Estrutura de Referência
+
+```
+AgendeX.Domain/
+├── Entities/
+│   └── Agendamento.cs, User.cs, ...
+└── Interfaces/
+    └── IAgendamentoRepository.cs, IUserRepository.cs, ...
+
+AgendeX.Application/
+├── DTOs/
+│   └── AgendamentoDto.cs, ...
+├── Interfaces/
+│   └── IAgendamentoService.cs, ...
+└── UseCases/
+    └── Agendamentos/
+        ├── CriarAgendamento/
+        │   ├── CriarAgendamentoCommand.cs
+        │   ├── CriarAgendamentoHandler.cs
+        │   └── CriarAgendamentoValidator.cs
+        └── ...
+
+AgendeX.Infrastructure/
+├── Data/
+│   └── AgendeXDbContext.cs
+└── Repositories/
+    └── AgendamentoRepository.cs, UserRepository.cs, ...
+
+AgendeX.WebAPI/
+├── Controllers/
+│   └── AgendamentosController.cs, UsersController.cs, ...
+└── Program.cs
+
+AgendeX.Tests/
+├── Application/
+│   └── CriarAgendamentoHandlerTests.cs, ...
+└── Domain/
+    └── AgendamentoTests.cs, ...
+```
+
+### Regra de Dependência (Dependency Rule)
+```
+WebAPI → Application → Domain
+Infrastructure → Domain + Application
+```
+Nunca inverter o sentido das dependências. Domain nunca importa de outras camadas.
+
 ## Padrões de Código
 
 ### Backend

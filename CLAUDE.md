@@ -1,22 +1,22 @@
-# AgendeX — Contexto do Projeto para Claude Code
+# AgendeX — Project Context for Claude Code
 
-## Visão Geral
+## Overview
 
-Sistema web de gerenciamento de agendamentos de atendimentos entre clientes e atendentes/especialistas. Desenvolvido como prova prática para processo seletivo SENAI/FIESC (01064/2026).
+Web system for managing service appointments between clients and agents/specialists. Developed as a practical assessment for the SENAI/FIESC hiring process (01064/2026).
 
 ## Stack
 
 ### Backend
 - .NET 8 — ASP.NET Core Web API
 - Clean Architecture (Domain / Application / Infrastructure / WebAPI)
-- CQRS com MediatR
+- CQRS with MediatR
 - Entity Framework Core + PostgreSQL
 - FluentValidation
 - AutoMapper
 - JWT Bearer Authentication
 - Swagger/OpenAPI (Swashbuckle)
-- ClosedXML (exportação XLSX)
-- xUnit + Moq + FluentAssertions (testes)
+- ClosedXML (XLSX export)
+- xUnit + Moq + FluentAssertions (tests)
 
 ### Frontend
 - React 18 + TypeScript + Vite
@@ -26,302 +26,364 @@ Sistema web de gerenciamento de agendamentos de atendimentos entre clientes e at
 - Tailwind CSS + shadcn/ui
 - Zustand
 
-### Infraestrutura
+### Infrastructure
 - Docker + Docker Compose
 - PostgreSQL 16
 
-## Estrutura de Pastas
+## Folder Structure
 
 ```
 prova-dotnet-react-senior-01064-2026/
 ├── backend/
 │   ├── AgendeX.sln
 │   ├── src/
-│   │   ├── AgendeX.Domain/          # Entidades, enums, interfaces
-│   │   ├── AgendeX.Application/     # Use Cases, DTOs, handlers, validators
-│   │   ├── AgendeX.Infrastructure/  # EF Core, repositórios, migrations, JWT
+│   │   ├── AgendeX.Domain/          # Entities, enums, interfaces
+│   │   ├── AgendeX.Application/     # Use cases, DTOs, handlers, validators
+│   │   ├── AgendeX.Infrastructure/  # EF Core, repositories, migrations, JWT
 │   │   └── AgendeX.WebAPI/          # Controllers, Swagger, middlewares, Program.cs
 │   └── tests/
-│       └── AgendeX.Tests/           # Testes unitários (xUnit + Moq)
+│       └── AgendeX.Tests/           # Unit tests (xUnit + Moq)
 ├── frontend/
 │   └── src/
-│       ├── components/              # Componentes reutilizáveis
-│       ├── pages/                   # Páginas por módulo
+│       ├── components/              # Reusable components
+│       ├── pages/                   # Module-based pages
 │       ├── hooks/                   # Custom hooks
-│       ├── services/                # Chamadas à API (Axios)
-│       ├── store/                   # Estado global (Zustand)
-│       ├── types/                   # Interfaces TypeScript
-│       └── utils/                   # Helpers e formatadores
+│       ├── services/                # API calls (Axios)
+│       ├── store/                   # Global state (Zustand)
+│       ├── types/                   # TypeScript interfaces
+│       └── utils/                   # Helpers and formatters
 ├── docker-compose.yml
 └── README.md
 ```
 
-## Modelo de Domínio
+## Domain Model
 
-### Entidades principais
+### Main Entities
 
 ```
 User
   - Id (Guid)
-  - Nome (string)
-  - Email (string, único)
-  - SenhaHash (string)
-  - Perfil (enum: Administrador | Atendente | Cliente)
-  - Ativo (bool)
-  - CriadoEm (DateTime)
+  - Name (string)
+  - Email (string, unique)
+  - PasswordHash (string)
+  - Role (enum: Administrator | Agent | Client)
+  - IsActive (bool)
+  - CreatedAt (DateTime)
 
-ClienteDetalhe  [somente se Perfil == Cliente]
+ClientDetail  [only if Role == Client]
   - Id (Guid)
   - UserId (Guid, FK)
-  - CPF (string, único)
-  - DataNascimento (DateOnly)
-  - Telefone (string)
-  - Observacoes (string?)
+  - CPF (string, unique)
+  - BirthDate (DateOnly)
+  - Phone (string)
+  - Notes (string?)
 
-TipoAtendimento  [tabela de apoio]
+ServiceType  [lookup table]
   - Id (int)
-  - Descricao (string)
-  - Exemplos: Consultoria, Suporte Técnico, Atendimento Comercial, Entrevista
+  - Description (string)
+  - Examples: Consulting, Technical Support, Commercial Service, Interview
 
-DisponibilidadeAtendente
+AgentAvailability
   - Id (Guid)
-  - AtendenteId (Guid, FK → User)
-  - DiaSemana (enum: Segunda ... Domingo)
-  - HoraInicial (TimeOnly)
-  - HoraFinal (TimeOnly)
-  - Ativo (bool)
-  - Regra: HoraFinal > HoraInicial
-  - Regra: sem sobreposição de intervalos para mesmo atendente + dia
+  - AgentId (Guid, FK → User)
+  - WeekDay (enum: Monday ... Sunday)
+  - StartTime (TimeOnly)
+  - EndTime (TimeOnly)
+  - IsActive (bool)
+  - Rule: EndTime > StartTime
+  - Rule: no overlapping intervals for the same agent + day
 
-Agendamento
+Appointment
   - Id (Guid)
-  - Titulo (string)
-  - Descricao (string?)
-  - TipoAtendimentoId (int, FK)
-  - ClienteId (Guid, FK → User)
-  - AtendenteId (Guid, FK → User)
-  - Data (DateOnly)
-  - Horario (TimeOnly)
-  - Status (enum — ver abaixo)
-  - JustificativaRecusa (string?)
-  - ResumoAtendimento (string?)
-  - CriadoEm (DateTime)
-  - ConfirmadoEm (DateTime?)
-  - CanceladoEm (DateTime?)
-  - Observacoes (string?)
+  - Title (string)
+  - Description (string?)
+  - ServiceTypeId (int, FK)
+  - ClientId (Guid, FK → User)
+  - AgentId (Guid, FK → User)
+  - Date (DateOnly)
+  - Time (TimeOnly)
+  - Status (enum — see below)
+  - RejectionReason (string?)
+  - ServiceSummary (string?)
+  - CreatedAt (DateTime)
+  - ConfirmedAt (DateTime?)
+  - CanceledAt (DateTime?)
+  - Notes (string?)
 ```
 
-### Enum Status do Agendamento
+### Appointment Status Enum
 ```
-PendenteConfirmacao
-Confirmado
-Recusado
-Cancelado
-Realizado
+PendingConfirmation
+Confirmed
+Rejected
+Canceled
+Completed
 ```
 
-## Regras de Negócio Críticas
+## Critical Business Rules
 
-### Perfis e Permissões
+### Roles and Permissions
 
-| Ação | Administrador | Atendente | Cliente |
+| Action | Administrator | Agent | Client |
 |------|:---:|:---:|:---:|
-| Ver todos usuários | ✅ | ❌ | ❌ |
-| Criar usuário | ✅ | ❌ | ❌ |
-| Editar qualquer usuário | ✅ | ❌ | ❌ |
-| Editar próprio usuário | ✅ | ✅ | ✅ |
-| Excluir usuário | ✅ | ❌ | ❌ |
-| Criar agendamento | ❌ | ❌ | ✅ |
-| Ver todos agendamentos | ✅ | ❌ | ❌ |
-| Ver próprios agendamentos | ✅ | ✅ (atribuídos) | ✅ |
-| Confirmar/Recusar agendamento | ❌ | ✅ | ❌ |
-| Cancelar agendamento | ✅ (qualquer) | ❌ | ✅ (com restrições) |
-| Marcar como Realizado | ❌ | ✅ | ❌ |
-| Reatribuir atendente | ✅ | ❌ | ❌ |
-| Cadastrar disponibilidade | ✅ | ❌ | ❌ |
-| Ver relatórios | ✅ | ✅ (restrito) | ❌ |
+| View all users | ✅ | ❌ | ❌ |
+| Create user | ✅ | ❌ | ❌ |
+| Edit any user | ✅ | ❌ | ❌ |
+| Edit own user | ✅ | ✅ | ✅ |
+| Delete user | ✅ | ❌ | ❌ |
+| Create appointment | ❌ | ❌ | ✅ |
+| View all appointments | ✅ | ❌ | ❌ |
+| View own appointments | ✅ | ✅ (assigned) | ✅ |
+| Confirm/Reject appointment | ❌ | ✅ | ❌ |
+| Cancel appointment | ✅ (any) | ❌ | ✅ (with restrictions) |
+| Mark as Completed | ❌ | ✅ | ❌ |
+| Reassign agent | ✅ | ❌ | ❌ |
+| Register availability | ✅ | ❌ | ❌ |
+| View reports | ✅ | ✅ (restricted) | ❌ |
 
-### Agendamento — Regras de Transição de Status
+### Appointment Status Transition Rules
 
 ```
-PendenteConfirmacao
-  → Confirmado       (ação: Atendente confirma)
-  → Recusado         (ação: Atendente recusa — JustificativaRecusa obrigatória)
-  → Cancelado        (ação: Cliente ou Administrador cancela)
+PendingConfirmation
+  → Confirmed       (action: Agent confirms)
+  → Rejected        (action: Agent rejects — RejectionReason is required)
+  → Canceled        (action: Client or Administrator cancels)
 
-Confirmado
-  → Cancelado        (ação: Cliente [somente se ainda não ocorreu] ou Administrador)
-  → Realizado        (ação: Atendente [somente se data/hora já foi atingida])
+Confirmed
+  → Canceled        (action: Client [only if it has not occurred yet] or Administrator)
+  → Completed       (action: Agent [only if appointment date/time has been reached])
 ```
 
-### Cancelamento pelo Cliente
-- Somente se status for `PendenteConfirmacao` ou `Confirmado`
-- Somente se a data/hora do agendamento ainda não ocorreu
+### Client Cancellation
+- Only when status is `PendingConfirmation` or `Confirmed`
+- Only if the appointment date/time has not occurred yet
 
-### Criação de Agendamento
-- Data não pode ser anterior à data atual
-- Horário deve estar dentro de uma janela de disponibilidade do atendente
-- Não pode haver conflito com outro agendamento `Confirmado` ou `PendenteConfirmacao` do mesmo atendente no mesmo horário
+### Appointment Creation
+- Date cannot be before the current date
+- Time must be within an agent availability window
+- There cannot be a conflict with another `Confirmed` or `PendingConfirmation` appointment for the same agent at the same time
 
-### Disponibilidade
-- HoraFinal > HoraInicial (obrigatório)
-- Intervalos não podem se sobrepor para o mesmo atendente e dia da semana
-- Ao consultar horários disponíveis: descontar horários já ocupados por agendamentos ativos
+### Availability
+- EndTime > StartTime (required)
+- Intervals cannot overlap for the same agent and weekday
+- When querying available slots: subtract occupied slots from active appointments
 
-## Requisitos Não Funcionais
+## Non-Functional Requirements
 
-- **RQNF1** — Backend em C#/.NET 8+, banco PostgreSQL ou SQL Server, frontend React + TypeScript
-- **RQNF2** — Frontend e backend em containers Docker distintos
-- **RQNF3** — Mínimo 70% cobertura de testes unitários nas classes de regra de negócio, sem falhas
-- **RQNF4** — Toda rota protegida por JWT; controle de acesso por perfil
-- **RQNF5** — Retornos HTTP semânticos: 200, 201, 400, 401, 403, 404, 500
-- **RQNF6** — Frontend exibe mensagens de erro amigáveis para todos os erros da API
-- **RQNF7** — Estrutura de banco via EF Core Migrations (sem SQL manual)
-- **RQNF8** — Campos com asterisco (*) são obrigatórios — validar no frontend e backend
-- **RQNF9** — Swagger completo com exemplos de request/response em todos os endpoints
-- **RQNF10** — Documentação técnica com diagramas de arquitetura, decisões de design e guia de instalação
-- **RQNF11** — Microsserviços são opcionais (não priorizar no prazo atual)
+- **NFR1** — Backend in C#/.NET 8+, PostgreSQL or SQL Server database, frontend with React + TypeScript
+- **NFR2** — Frontend and backend in separate Docker containers
+- **NFR3** — Minimum 70% unit test coverage in business rule classes, with no failing tests
+- **NFR4** — Every route protected by JWT; role-based access control
+- **NFR5** — Semantic HTTP responses: 200, 201, 400, 401, 403, 404, 500
+- **NFR6** — Frontend shows user-friendly error messages for all API errors
+- **NFR7** — Database structure via EF Core Migrations (no manual SQL)
+- **NFR8** — Fields marked with (*) are required — validate on frontend and backend
+- **NFR9** — Complete Swagger with request/response examples on all endpoints
+- **NFR10** — Technical documentation with architecture diagrams, design decisions, and setup guide
+- **NFR11** — Microservices are optional (not prioritized in the current timeline)
 
-## Módulos Funcionais
+## Functional Modules
 
-### RQF1 — Usuários
-- 1.1 Listagem (filtrada por perfil)
-- 1.2 Inserção (somente Admin; campos extras para Cliente)
-- 1.3 Edição (sem alterar email e senha)
+### FR1 — Users
+- 1.1 Listing (filtered by role)
+- 1.2 Creation (Admin only; extra fields for Client)
+- 1.3 Editing (without changing email and password)
 
-### RQF2 — Agendamentos
-- 2.1 Criação (somente Cliente)
-- 2.2 Listagem com filtros (Cliente, Atendente, Tipo, Status, Período)
-- 2.3 Detalhes e ações por perfil
-- 2.4 Cancelamento
-- 2.5 Conclusão (marcar como Realizado)
+### FR2 — Appointments
+- 2.1 Creation (Client only)
+- 2.2 Listing with filters (Client, Agent, Type, Status, Period)
+- 2.3 Details and role-based actions
+- 2.4 Cancellation
+- 2.5 Completion (mark as Completed)
 
-### RQF3 — Disponibilidade de Agenda
-- 3.1 Cadastro de janelas por dia da semana (somente Admin)
-- 3.2 Consulta de horários disponíveis ao selecionar atendente + data
+### FR3 — Schedule Availability
+- 3.1 Register time windows by weekday (Admin only)
+- 3.2 Query available times when selecting agent + date
 
-### RQF4 — Relatórios
-- Filtros: Cliente(s), Atendente(s), Período, Tipo de Atendimento, Status
-- Tipos de relatório: por atendente, por cliente, por status, taxa realizado vs cancelado, por tipo
-- Exportação CSV e XLSX
-- Tabela ordenável por qualquer coluna
-- Acesso: Administrador (completo) e Atendente (restrito aos seus dados)
+### FR4 — Reports
+- Filters: Client(s), Agent(s), Period, Service Type, Status
+- Report types: by agent, by client, by status, completed vs canceled rate, by type
+- CSV and XLSX export
+- Sortable table by any column
+- Access: Administrator (full) and Agent (restricted to own data)
 
-## Arquitetura Clean Architecture — Camadas e Responsabilidades
+## Clean Architecture — Layers and Responsibilities
 
 ### Domain Layer
-- Contém a lógica de negócio da empresa (enterprise/business logic)
-- Entidades, Value Objects, Domain Events, Interfaces, regras de negócio
-- **Sem dependências em outras camadas**
-- Estrutura: `AgendeX.Domain/Entities/`, `AgendeX.Domain/Interfaces/`
+- Contains enterprise/business rules
+- Entities, Value Objects, Domain Events, Interfaces, business rules
+- **No dependencies on other layers**
+- Structure: `AgendeX.Domain/Entities/`, `AgendeX.Domain/Interfaces/`
 
 ### Application Layer
-- Contém a lógica de aplicação (use cases)
-- DTOs, interfaces de serviço, handlers MediatR, validators
-- **Depende apenas do Domain**
-- Estrutura: `AgendeX.Application/DTOs/`, `AgendeX.Application/Interfaces/`, `AgendeX.Application/UseCases/`
+- Contains application logic (use cases)
+- DTOs, service interfaces, MediatR handlers, validators
+- **Depends only on Domain**
+- Structure: `AgendeX.Application/DTOs/`, `AgendeX.Application/Interfaces/`, `AgendeX.Application/UseCases/`
 
 ### Infrastructure Layer
-- Implementa as interfaces definidas no Domain/Application
-- DbContext (EF Core), repositórios, serviços externos, JWT, migrations
-- **Depende do Domain e Application**
-- Estrutura: `AgendeX.Infrastructure/Data/`, `AgendeX.Infrastructure/Repositories/`
+- Implements interfaces defined in Domain/Application
+- DbContext (EF Core), repositories, external services, JWT, migrations
+- **Depends on Domain and Application**
+- Structure: `AgendeX.Infrastructure/Data/`, `AgendeX.Infrastructure/Repositories/`
 
 ### WebAPI Layer
-- Controllers, middlewares, configuração do Swagger, Program.cs
-- **Depende apenas do Application** (nunca referencia Domain ou Infrastructure diretamente)
-- Estrutura: `AgendeX.WebAPI/Controllers/`, `AgendeX.WebAPI/Middlewares/`
+- Controllers, middlewares, Swagger setup, Program.cs
+- **Depends only on Application** (must never reference Domain or Infrastructure directly)
+- Structure: `AgendeX.WebAPI/Controllers/`, `AgendeX.WebAPI/Middlewares/`
 
-### Estrutura de Referência
+### Reference Structure
 
 ```
 AgendeX.Domain/
 ├── Entities/
-│   └── Agendamento.cs, User.cs, ...
+│   └── Appointment.cs, User.cs, ...
 └── Interfaces/
-    └── IAgendamentoRepository.cs, IUserRepository.cs, ...
+    └── IAppointmentRepository.cs, IUserRepository.cs, ...
 
 AgendeX.Application/
 ├── DTOs/
-│   └── AgendamentoDto.cs, ...
+│   └── AppointmentDto.cs, ...
 ├── Interfaces/
-│   └── IAgendamentoService.cs, ...
+│   └── IAppointmentService.cs, ...
 └── UseCases/
-    └── Agendamentos/
-        ├── CriarAgendamento/
-        │   ├── CriarAgendamentoCommand.cs
-        │   ├── CriarAgendamentoHandler.cs
-        │   └── CriarAgendamentoValidator.cs
+    └── Appointments/
+        ├── CreateAppointment/
+        │   ├── CreateAppointmentCommand.cs
+        │   ├── CreateAppointmentHandler.cs
+        │   └── CreateAppointmentValidator.cs
         └── ...
 
 AgendeX.Infrastructure/
 ├── Data/
 │   └── AgendeXDbContext.cs
 └── Repositories/
-    └── AgendamentoRepository.cs, UserRepository.cs, ...
+    └── AppointmentRepository.cs, UserRepository.cs, ...
 
 AgendeX.WebAPI/
 ├── Controllers/
-│   └── AgendamentosController.cs, UsersController.cs, ...
+│   └── AppointmentsController.cs, UsersController.cs, ...
 └── Program.cs
 
 AgendeX.Tests/
 ├── Application/
-│   └── CriarAgendamentoHandlerTests.cs, ...
+│   └── CreateAppointmentHandlerTests.cs, ...
 └── Domain/
-    └── AgendamentoTests.cs, ...
+    └── AppointmentTests.cs, ...
 ```
 
-### Regra de Dependência (Dependency Rule)
+### Dependency Rule
 ```
 WebAPI → Application → Domain
 Infrastructure → Domain + Application
 ```
-Nunca inverter o sentido das dependências. Domain nunca importa de outras camadas.
+Never invert dependency direction. Domain must never import from other layers.
 
-## Padrões de Código
+## Coding Standards
 
 ### Backend
-- Um handler MediatR por use case (nunca lógica de negócio no Controller)
-- Controllers finos: recebem request → disparam comando/query → retornam resultado
-- Validações com FluentValidation em classes separadas (`*Validator.cs`)
-- Repositórios via interface no Domain, implementação na Infrastructure
-- Nunca usar `var` onde o tipo não é óbvio
-- Métodos com no máximo 20 linhas — extrair se necessário
-- Nomes em português para entidades de domínio, inglês para infraestrutura técnica
+- One MediatR handler per use case (never put business logic in controllers)
+- Thin controllers: receive request → dispatch command/query → return result
+- Validation with FluentValidation in separate classes (`*Validator.cs`)
+- Repositories via Domain interfaces, implemented in Infrastructure
+- Do not use `var` when the type is not obvious
+- Methods with a maximum of 20 lines — extract when needed
+- Portuguese names for domain entities, English for technical infrastructure
 
-### Testes
-- Um arquivo de teste por handler
-- Nomenclatura: `NomeDoMetodo_Cenario_ResultadoEsperado`
-- Sempre mockar repositórios com Moq
-- Usar FluentAssertions para assertions legíveis
+### Tests
+- One test file per handler
+- Naming: `MethodName_Scenario_ExpectedResult`
+- Always mock repositories with Moq
+- Use FluentAssertions for readable assertions
 
 ### Frontend
-- Componentes funcionais com TypeScript estrito
-- Custom hooks para lógica de negócio (nunca direto no componente)
-- React Query para cache e estados de loading/error
-- Zod para validação de formulários
-- Nunca usar `any` — sempre tipar
+- Functional components with strict TypeScript
+- Custom hooks for business logic (never directly in components)
+- React Query for cache and loading/error states
+- Zod for form validation
+- Never use `any` — always type everything
 
-## Critérios de Avaliação (pesos)
+## Evaluation Criteria (weights)
 
-1. Conhecimento técnico (peso 2)
-2. Planejamento e organização
-3. Comunicação e interação
-4. Trabalho colaborativo
-5. Análise e síntese
+1. Technical knowledge (weight 2)
+2. Planning and organization
+3. Communication and interaction
+4. Collaborative work
+5. Analysis and synthesis
 
-## Prazo
+## Deadline
 
-**19/04/2026 às 23h59** — envio obrigatório via repositório + Pandapé
+**04/19/2026 at 23:59** — mandatory submission via repository + Pandapé
 
-## Ordem de Implementação Recomendada
+## Recommended Implementation Order
 
-1. Estrutura base + Docker Compose + migrations iniciais
-2. Autenticação JWT (login, geração de token, middleware)
-3. Módulo de Usuários (CRUD completo)
-4. Módulo de Disponibilidade (pré-requisito para agendamentos)
-5. Módulo de Agendamentos (criação, listagem, ações, cancelamento, conclusão)
-6. Módulo de Relatórios (queries + exportação)
-7. Testes unitários dos handlers
-8. Documentação técnica (README, diagramas Mermaid)
+1. Base structure + Docker Compose + initial migrations
+2. JWT authentication (login, token generation, middleware)
+3. Users module (full CRUD)
+4. Availability module (prerequisite for appointments)
+5. Appointments module (creation, listing, actions, cancellation, completion)
+6. Reports module (queries + export)
+7. Unit tests for handlers
+8. Technical documentation (README, Mermaid diagrams)
+
+## STAGE 2 — JWT Authentication (Secure)
+
+**Estimate:** ~3h
+
+### Tokens
+
+- Access token with 15-minute expiration
+- Refresh token with 7-day expiration, stored in the database as a hash
+- **RS256** algorithm (asymmetric RSA key pair), do not use HS256
+- Access token claims:
+  - `sub` (userId)
+  - `name`
+  - `email`
+  - `role`
+  - `jti` (unique GUID for tracing)
+
+### RefreshToken Entity (Infrastructure)
+
+```csharp
+RefreshToken
+  - Id (Guid)
+  - UserId (Guid, FK)
+  - TokenHash (string)   // store SHA-256 hash, never store plain-text token
+  - ExpiresAt (DateTime)
+  - IsRevoked (bool)
+  - CreatedAt (DateTime)
+```
+
+### Authentication Endpoints
+
+| Method | Route | Description |
+|------|------|------|
+| POST | /api/auth/login | Validates credentials and returns `{ accessToken, refreshToken, expiresAt }` |
+| POST | /api/auth/refresh | Receives refresh token, issues a new pair, revokes the previous one (rotation) |
+| POST | /api/auth/logout | Revokes refresh token in the database |
+
+### Password Protection
+
+- BCrypt with work factor **12** (do not use 10)
+
+### Rate Limiting
+
+- Package: `AspNetCoreRateLimit`
+- Rule: maximum 5 login attempts per IP in 1 minute
+- Limit exceeded: return `429 Too Many Requests`
+- Configuration via `appsettings.json` (easy to demonstrate in Swagger)
+
+### Security Headers
+
+Custom middleware adding:
+
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: no-referrer`
+- `X-XSS-Protection: 1; mode=block`
+
+### Swagger
+
+- Bearer Token support configured
+- Request/response examples on all auth endpoints
+- Status code documentation: 200, 400, 401, 429

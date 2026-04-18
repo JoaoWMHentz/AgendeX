@@ -24,21 +24,13 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Enter a valid JWT bearer token.",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.Http,
-        Scheme = JwtBearerDefaults.AuthenticationScheme,
+        Scheme = JwtBearerDefaults.AuthenticationScheme.ToLowerInvariant(),
         BearerFormat = "JWT"
     };
 
     options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, jwtSecurityScheme);
 
-    OpenApiSecuritySchemeReference jwtSecuritySchemeReference = new(JwtBearerDefaults.AuthenticationScheme);
-
-    options.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
-    {
-        {
-            jwtSecuritySchemeReference,
-            []
-        }
-    });
+    options.DocumentFilter<AllowAnonymousOperationFilter>();
 });
 
 builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));

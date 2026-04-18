@@ -7,7 +7,7 @@ Web system for managing service appointments between clients and agents/speciali
 ## Stack
 
 ### Backend
-- .NET 8 — ASP.NET Core Web API
+- .NET 10 — ASP.NET Core Web API
 - Clean Architecture (Domain / Application / Infrastructure / WebAPI)
 - CQRS with MediatR
 - Entity Framework Core + PostgreSQL
@@ -35,14 +35,13 @@ Web system for managing service appointments between clients and agents/speciali
 ```
 prova-dotnet-react-senior-01064-2026/
 ├── backend/
-│   ├── AgendeX.sln
-│   ├── src/
-│   │   ├── AgendeX.Domain/          # Entities, enums, interfaces
-│   │   ├── AgendeX.Application/     # Features (Commands/Queries) + Common (Behaviors/Interfaces)
-│   │   ├── AgendeX.Infrastructure/  # EF Core, repositories, migrations, JWT
-│   │   └── AgendeX.WebAPI/          # Controllers, Swagger, middlewares, Program.cs
-│   └── tests/
-│       └── AgendeX.Tests/           # Unit tests (xUnit + Moq)
+│   ├── AgendeX.slnx
+│   ├── AgendeX.Domain/              # Entities, enums, interfaces
+│   ├── AgendeX.Application/         # Features (Commands/Queries) + Common (Behaviors/Interfaces)
+│   ├── AgendeX.Infrastructure/      # Persistence (EF/repositories/migrations), Services, Identity
+│   ├── AgendeX.WebAPI/              # Controllers, Swagger, middlewares, Program.cs
+│   ├── AgendeX.Tests/               # Unit tests (xUnit + Moq)
+│   └── scripts/                     # Utility scripts (seed, etc.)
 ├── frontend/
 │   └── src/
 │       ├── components/              # Reusable components
@@ -223,69 +222,79 @@ Confirmed
 
 ### Infrastructure Layer
 - Implements interfaces defined in Domain/Application
-- DbContext (EF Core), repositories, external services, JWT, migrations
+- Persistence (DbContext, configurations, migrations, repositories), services, and identity/JWT
 - **Depends on Domain and Application**
-- Structure: `AgendeX.Infrastructure/Data/`, `AgendeX.Infrastructure/Repositories/`
+- Structure: `AgendeX.Infrastructure/Persistence/`, `AgendeX.Infrastructure/Services/`, `AgendeX.Infrastructure/Identity/`
 
 ### WebAPI Layer
 - Controllers, middlewares, Swagger setup, Program.cs
 - **Depends only on Application** (must never reference Domain or Infrastructure directly)
 - Structure: `AgendeX.WebAPI/Controllers/`, `AgendeX.WebAPI/Middlewares/`
 
+Note: in the current implementation, startup composition in `Program.cs` wires Infrastructure through DI.
+
 ### Reference Structure
 
 ```
 AgendeX.Domain/
 ├── Entities/
-│   └── Appointment.cs, User.cs, ...
+│   └── User.cs, ClientDetail.cs, RefreshToken.cs
+├── Enums/
+│   └── UserRole.cs
 └── Interfaces/
-    └── IAppointmentRepository.cs, IUserRepository.cs, ...
+  └── IUserRepository.cs, IRefreshTokenRepository.cs
 
 AgendeX.Application/
-├── Features/
-│   ├── Appointments/
-│   │   ├── Commands/
-│   │   │   └── CreateAppointment/
-│   │   │       └── CreateAppointmentCommand.cs   # Command + Handler + Validator (single file)
-│   │   └── Queries/
-│   │       └── GetAppointmentById/
-│   │           └── GetAppointmentByIdQuery.cs    # Query + Handler + DTO (single file when possible)
-│   ├── Auth/
-│   │   ├── Common/
-│   │   │   └── AuthResponseDto.cs
-│   │   └── Commands/
-│   │       ├── Login/
-│   │       │   └── LoginCommand.cs               # Command + Handler + Validator
-│   │       ├── RefreshToken/
-│   │       │   └── RefreshTokenCommand.cs        # Command + Handler + Validator
-│   │       └── Logout/
-│   │           └── LogoutCommand.cs              # Command + Handler + Validator
-│   └── Users/
-│       └── ...
 ├── Common/
 │   ├── Behaviors/
-│   │   ├── ValidationBehavior.cs
-│   │   └── LoggingBehavior.cs
+│   │   └── ValidationBehavior.cs
 │   └── Interfaces/
-│       └── IApplicationDbContext.cs
+│       └── IPasswordHasher.cs, ITokenService.cs
+├── Features/
+│   └── Auth/
+│       ├── Common/
+│       │   └── AuthResponseDto.cs
+│       └── Commands/
+│           ├── Login/
+│           │   └── LoginCommand.cs               # Command + Handler + Validator
+│           ├── RefreshToken/
+│           │   └── RefreshTokenCommand.cs        # Command + Handler + Validator
+│           └── Logout/
+│               └── LogoutCommand.cs              # Command + Handler + Validator
 └── DependencyInjection.cs
 
 AgendeX.Infrastructure/
-├── Data/
-│   └── AgendeXDbContext.cs
-└── Repositories/
-    └── AppointmentRepository.cs, UserRepository.cs, ...
+├── Persistence/
+│   ├── ApplicationDbContext.cs
+│   ├── Configurations/
+│   │   └── UserConfiguration.cs, ClientDetailConfiguration.cs, RefreshTokenConfiguration.cs
+│   ├── Migrations/
+│   │   └── 20260417235513_InitialCreate.cs, ApplicationDbContextModelSnapshot.cs
+│   └── Repositories/
+│       └── UserRepository.cs, RefreshTokenRepository.cs, ...
+├── Services/
+│   └── TokenService.cs, PasswordHasher.cs
+├── Identity/
+│   └── JwtOptions.cs, RsaKeyProvider.cs
+└── DependencyInjection.cs
 
 AgendeX.WebAPI/
 ├── Controllers/
-│   └── AppointmentsController.cs, UsersController.cs, ...
+│   └── AuthController.cs
+├── Models/
+│   └── Auth/
+│       └── LoginRequest.cs, RefreshRequest.cs, LogoutRequest.cs
+├── Middlewares/
+│   └── SecurityHeadersMiddleware.cs
 └── Program.cs
 
 AgendeX.Tests/
 ├── Application/
-│   └── CreateAppointmentHandlerTests.cs, ...
-└── Domain/
-    └── AppointmentTests.cs, ...
+│   └── Auth/
+│       └── AuthFlowTests.cs, LoginCommandHandlerTests.cs, RefreshTokenCommandHandlerTests.cs, LogoutCommandHandlerTests.cs, AuthValidatorsTests.cs
+└── Infrastructure/
+  └── Auth/
+    └── TokenServiceTests.cs, PasswordHasherTests.cs
 ```
 
 ### Dependency Rule

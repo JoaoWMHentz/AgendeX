@@ -21,8 +21,10 @@ public sealed class RsaKeyProvider : IDisposable
             Exponent = keyParameters.Exponent
         });
 
-        PrivateKey = new RsaSecurityKey(_privateRsa);
-        PublicKey = new RsaSecurityKey(_publicRsa);
+        string keyId = ComputeKeyId(keyParameters.Modulus!);
+
+        PrivateKey = new RsaSecurityKey(_privateRsa) { KeyId = keyId };
+        PublicKey = new RsaSecurityKey(_publicRsa) { KeyId = keyId };
     }
 
     public SecurityKey PrivateKey { get; }
@@ -32,5 +34,11 @@ public sealed class RsaKeyProvider : IDisposable
     {
         _privateRsa.Dispose();
         _publicRsa.Dispose();
+    }
+
+    private static string ComputeKeyId(byte[] modulus)
+    {
+        byte[] hash = SHA256.HashData(modulus);
+        return Convert.ToBase64String(hash)[..16];
     }
 }

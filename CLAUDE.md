@@ -9,14 +9,14 @@ Web system for managing service appointments between clients and agents/speciali
 ### Backend
 - .NET 10 — ASP.NET Core Web API
 - Clean Architecture (Domain / Application / Infrastructure / WebAPI)
-- CQRS with MediatR
-- Entity Framework Core + PostgreSQL
-- FluentValidation
-- AutoMapper
-- JWT Bearer Authentication
-- Swagger/OpenAPI (Swashbuckle)
-- ClosedXML (XLSX export)
-- xUnit + Moq + FluentAssertions (tests)
+- CQRS with MediatR 12.5
+- Entity Framework Core 9 + Npgsql (PostgreSQL 16)
+- FluentValidation 12.1
+- JWT RS256 (Microsoft.IdentityModel.Tokens 8.14)
+- Swagger via Swashbuckle.AspNetCore 10
+- AspNetCoreRateLimit 5.0
+- BCrypt.Net-Next 4.0 (work factor 12)
+- xUnit + Moq + FluentAssertions + EF InMemory (tests)
 
 ### Frontend
 - React 18 + TypeScript + Vite
@@ -42,16 +42,8 @@ prova-dotnet-react-senior-01064-2026/
 │   ├── AgendeX.WebAPI/              # Controllers, Swagger, middlewares, Program.cs
 │   ├── AgendeX.Tests/               # Unit tests (xUnit + Moq)
 │   └── scripts/                     # Utility scripts (seed, etc.)
-├── frontend/
-│   └── src/
-│       ├── components/              # Reusable components
-│       ├── pages/                   # Module-based pages
-│       ├── hooks/                   # Custom hooks
-│       ├── services/                # API calls (Axios)
-│       ├── store/                   # Global state (Zustand)
-│       ├── types/                   # TypeScript interfaces
-│       └── utils/                   # Helpers and formatters
-├── docker-compose.yml
+├── frontend/                        # React app (not yet started)
+├── docker-compose.yml               # PostgreSQL 16 only (app containers pending)
 └── README.md
 ```
 
@@ -77,15 +69,15 @@ ClientDetail  [only if Role == Client]
   - Phone (string)
   - Notes (string?)
 
-ServiceType  [lookup table]
+ServiceType  [lookup table — seeded]
   - Id (int)
   - Description (string)
-  - Examples: Consulting, Technical Support, Commercial Service, Interview
+  - Seeds: Consulting (1), Technical Support (2), Commercial Service (3), Interview (4)
 
 AgentAvailability
   - Id (Guid)
   - AgentId (Guid, FK → User)
-  - WeekDay (enum: Monday ... Sunday)
+  - WeekDay (enum: Sunday=0 ... Saturday=6)
   - StartTime (TimeOnly)
   - EndTime (TimeOnly)
   - IsActive (bool)
@@ -130,6 +122,7 @@ Completed
 | Edit any user | ✅ | ❌ | ❌ |
 | Edit own user | ✅ | ✅ | ✅ |
 | Delete user | ✅ | ❌ | ❌ |
+| Set client detail | ✅ | ❌ | ❌ |
 | Create appointment | ❌ | ❌ | ✅ |
 | View all appointments | ✅ | ❌ | ❌ |
 | View own appointments | ✅ | ✅ (assigned) | ✅ |
@@ -138,6 +131,7 @@ Completed
 | Mark as Completed | ❌ | ✅ | ❌ |
 | Reassign agent | ✅ | ❌ | ❌ |
 | Register availability | ✅ | ❌ | ❌ |
+| View availability | ✅ | ✅ | ✅ |
 | View reports | ✅ | ✅ (restricted) | ❌ |
 
 ### Appointment Status Transition Rules
@@ -184,20 +178,23 @@ Confirmed
 ## Functional Modules
 
 ### FR1 — Users
-- 1.1 Listing (filtered by role)
-- 1.2 Creation (Admin only; extra fields for Client)
-- 1.3 Editing (without changing email and password)
+- 1.1 Listing (filtered by role) — Admin only
+- 1.2 Creation (Admin only) — `POST /api/users` with `{name, email, password, role}`
+- 1.3 Set client detail — `PUT /api/users/{id}/client-detail` — validates user is Client role
+- 1.4 Editing name — `PUT /api/users/{id}` with `{name}`
 
 ### FR2 — Appointments
 - 2.1 Creation (Client only)
-- 2.2 Listing with filters (Client, Agent, Type, Status, Period)
+- 2.2 Listing with filters (ClientId, AgentId, ServiceTypeId, Status, From, To)
 - 2.3 Details and role-based actions
 - 2.4 Cancellation
 - 2.5 Completion (mark as Completed)
+- 2.6 Reassign agent (Admin only)
 
 ### FR3 — Schedule Availability
 - 3.1 Register time windows by weekday (Admin only)
-- 3.2 Query available times when selecting agent + date
+- 3.2 Query availabilities by agent
+- 3.3 Query available slots for a specific agent + date (deducts confirmed/pending appointments)
 
 ### FR4 — Reports
 - Filters: Client(s), Agent(s), Period, Service Type, Status
@@ -212,37 +209,41 @@ Confirmed
 - Contains enterprise/business rules
 - Entities, Value Objects, Domain Events, Interfaces, business rules
 - **No dependencies on other layers**
-- Structure: `AgendeX.Domain/Entities/`, `AgendeX.Domain/Interfaces/`
 
 ### Application Layer
 - Contains application logic (use cases)
-- Features with Commands/Queries, DTOs, service interfaces, MediatR handlers, validators
+- Features with Commands/Queries, DTOs, MediatR handlers, FluentValidation validators
 - **Depends only on Domain**
-- Structure: `AgendeX.Application/Features/`, `AgendeX.Application/Common/`
 
 ### Infrastructure Layer
 - Implements interfaces defined in Domain/Application
 - Persistence (DbContext, configurations, migrations, repositories), services, and identity/JWT
 - **Depends on Domain and Application**
-- Structure: `AgendeX.Infrastructure/Persistence/`, `AgendeX.Infrastructure/Services/`, `AgendeX.Infrastructure/Identity/`
 
 ### WebAPI Layer
 - Controllers, middlewares, Swagger setup, Program.cs
-- **Depends only on Application** (must never reference Domain or Infrastructure directly)
-- Structure: `AgendeX.WebAPI/Controllers/`, `AgendeX.WebAPI/Middlewares/`
+- **Depends only on Application** (startup composition in Program.cs wires Infrastructure through DI)
 
-Note: in the current implementation, startup composition in `Program.cs` wires Infrastructure through DI.
+### Dependency Rule
+```
+WebAPI → Application → Domain
+Infrastructure → Domain + Application
+```
 
-### Reference Structure
+## Current File Structure
 
 ```
 AgendeX.Domain/
 ├── Entities/
 │   └── User.cs, ClientDetail.cs, RefreshToken.cs
+│   └── ServiceType.cs, AgentAvailability.cs, Appointment.cs
 ├── Enums/
-│   └── UserRole.cs
+│   └── UserRole.cs           # Administrator | Agent | Client
+│   └── WeekDay.cs            # Sunday=0 ... Saturday=6
+│   └── AppointmentStatus.cs  # PendingConfirmation | Confirmed | Rejected | Canceled | Completed
 └── Interfaces/
     └── IUserRepository.cs, IClientDetailRepository.cs, IRefreshTokenRepository.cs
+    └── IServiceTypeRepository.cs, IAgentAvailabilityRepository.cs, IAppointmentRepository.cs
 
 AgendeX.Application/
 ├── Common/
@@ -254,10 +255,21 @@ AgendeX.Application/
 │   ├── Auth/
 │   │   ├── AuthDto.cs          # AuthResponseDto
 │   │   └── AuthCommands.cs     # Login + Refresh + Logout (Command + Handler + Validator each)
-│   └── Users/
-│       ├── UserDto.cs          # UserDto + ClientDetailDto + UserMapper
-│       ├── UserQueries.cs      # GetUsers + GetUserById (Query + Handler each)
-│       └── UserCommands.cs     # CreateUser + UpdateUser + DeleteUser (Command + Handler + Validator each)
+│   ├── Users/
+│   │   ├── UserDto.cs          # UserDto + ClientDetailDto + UserMapper
+│   │   ├── UserQueries.cs      # GetUsers + GetUserById
+│   │   └── UserCommands.cs     # CreateUser + UpdateUser + DeleteUser + SetClientDetail
+│   ├── ServiceTypes/
+│   │   ├── ServiceTypeDto.cs
+│   │   └── ServiceTypeQueries.cs   # GetServiceTypes + GetServiceTypeById
+│   ├── Availability/
+│   │   ├── AvailabilityDto.cs       # AvailabilityDto + AvailableSlotDto
+│   │   ├── AvailabilityQueries.cs   # GetAvailabilitiesByAgent + GetAvailableSlots
+│   │   └── AvailabilityCommands.cs  # CreateAvailability + UpdateAvailability + DeleteAvailability
+│   └── Appointments/
+│       ├── AppointmentDto.cs        # AppointmentDto + AppointmentMapper
+│       ├── AppointmentQueries.cs    # GetAppointments + GetAppointmentById
+│       └── AppointmentCommands.cs   # Create + Confirm + Reject + Cancel + Complete + Reassign
 └── DependencyInjection.cs
 
 AgendeX.Infrastructure/
@@ -265,28 +277,38 @@ AgendeX.Infrastructure/
 │   ├── ApplicationDbContext.cs
 │   ├── Configurations/
 │   │   └── UserConfiguration.cs, ClientDetailConfiguration.cs, RefreshTokenConfiguration.cs
+│   │   └── ServiceTypeConfiguration.cs, AgentAvailabilityConfiguration.cs, AppointmentConfiguration.cs
 │   ├── Migrations/
-│   │   └── 20260417235513_InitialCreate.cs, ApplicationDbContextModelSnapshot.cs
+│   │   └── 20260417235513_InitialCreate.cs
+│   │   └── 20260418172619_AddAvailabilityAndAppointments.cs
+│   │   └── ApplicationDbContextModelSnapshot.cs
 │   └── Repositories/
 │       └── UserRepository.cs, ClientDetailRepository.cs, RefreshTokenRepository.cs
+│       └── ServiceTypeRepository.cs, AgentAvailabilityRepository.cs, AppointmentRepository.cs
 ├── Services/
 │   └── TokenService.cs, PasswordHasher.cs
 ├── Identity/
-│   └── JwtOptions.cs, RsaKeyProvider.cs
+│   └── JwtOptions.cs, RsaKeyProvider.cs   # RSA key pair gerado em memória com KeyId derivado via SHA-256
 └── DependencyInjection.cs
 
 AgendeX.WebAPI/
 ├── Controllers/
-│   └── AuthController.cs      # includes LoginRequest, RefreshRequest, LogoutRequest records
-│   └── UsersController.cs     # includes CreateUserRequest, UpdateUserRequest records
+│   └── AuthController.cs           # POST /api/auth/login, /refresh, /logout
+│   └── UsersController.cs          # GET/POST/PUT/DELETE /api/users + PUT /api/users/{id}/client-detail
+│   └── ServiceTypesController.cs   # GET /api/servicetypes, GET /api/servicetypes/{id}
+│   └── AvailabilityController.cs   # GET /api/availability/agent/{id}, GET /api/availability/slots, POST/PUT/DELETE
+│   └── AppointmentsController.cs   # GET/POST /api/appointments + PUT /confirm /reject /cancel /complete /reassign
 ├── Middlewares/
 │   └── SecurityHeadersMiddleware.cs
+│   └── GlobalExceptionHandler.cs   # ValidationException→400, KeyNotFound→404, Unauthorized→401, other→500
+│   └── AuthorizeOperationFilter.cs # Swagger: remove lock em /api/auth/*, adiciona JWT nos demais
 └── Program.cs
 
 AgendeX.Tests/
 ├── Application/
 │   └── Auth/
-│       └── AuthFlowTests.cs, LoginCommandHandlerTests.cs, RefreshTokenCommandHandlerTests.cs, LogoutCommandHandlerTests.cs, AuthValidatorsTests.cs
+│       └── AuthFlowTests.cs, LoginCommandHandlerTests.cs, RefreshTokenCommandHandlerTests.cs
+│       └── LogoutCommandHandlerTests.cs, AuthValidatorsTests.cs
 └── Infrastructure/
     ├── Auth/
     │   └── TokenServiceTests.cs, PasswordHasherTests.cs, RsaKeyProviderTests.cs
@@ -294,24 +316,74 @@ AgendeX.Tests/
         └── UserRepositoryTests.cs, RefreshTokenRepositoryTests.cs, EntityConfigurationTests.cs
 ```
 
-### Dependency Rule
-```
-WebAPI → Application → Domain
-Infrastructure → Domain + Application
-```
-Never invert dependency direction. Domain must never import from other layers.
+## API Endpoints (implemented)
+
+### Auth
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| POST | /api/auth/login | ❌ | Returns `{ accessToken, refreshToken, expiresAt }` |
+| POST | /api/auth/refresh | ❌ | Rotates refresh token |
+| POST | /api/auth/logout | ❌ | Revokes refresh token |
+
+### Users
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | /api/users | Admin | List users (filter by role) |
+| GET | /api/users/{id} | Any | Get user by ID |
+| POST | /api/users | Admin | Create user `{name, email, password, role}` |
+| PUT | /api/users/{id} | Any | Update name |
+| PUT | /api/users/{id}/client-detail | Admin | Set/update client detail (validates role == Client) |
+| DELETE | /api/users/{id} | Admin | Soft-delete (deactivates) |
+
+### Service Types
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | /api/servicetypes | Any | List all service types |
+| GET | /api/servicetypes/{id} | Any | Get by ID |
+
+### Availability
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | /api/availability/agent/{agentId} | Any | List availability windows for an agent |
+| GET | /api/availability/slots?agentId=&date= | Any | Available time slots (deducts occupied) |
+| POST | /api/availability | Admin | Create availability window |
+| PUT | /api/availability/{id} | Admin | Update start/end time |
+| DELETE | /api/availability/{id} | Admin | Deactivate window |
+
+### Appointments
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | /api/appointments | Any | List with filters; scope enforced by role |
+| GET | /api/appointments/{id} | Any | Get details |
+| POST | /api/appointments | Client | Create appointment |
+| PUT | /api/appointments/{id}/confirm | Agent | Confirm |
+| PUT | /api/appointments/{id}/reject | Agent | Reject (requires reason) |
+| PUT | /api/appointments/{id}/cancel | Client/Admin | Cancel |
+| PUT | /api/appointments/{id}/complete | Agent | Mark completed |
+| PUT | /api/appointments/{id}/reassign | Admin | Reassign to another agent |
 
 ## Coding Standards
 
 ### Backend
 - One MediatR handler per use case (never put business logic in controllers)
-- Thin controllers: receive request → dispatch command/query → return result; request models as `record` inside the controller file
+- **Thin controllers** — receive request → dispatch command/query → return result
+- **Command-as-body pattern**: when all command fields come from the request body, pass the command directly as `[FromBody]`; when the command has fields that come from the route or JWT token (e.g. `Id`, `UserId`), use a minimal `*Body` record for the body-only fields and construct the command manually
+  ```csharp
+  // ✅ All fields from body — use command directly
+  public async Task<IActionResult> Create([FromBody] CreateUserCommand command, ...)
+
+  // ✅ Id from route, fields from body — use *Body record
+  public sealed record UpdateUserBody(string Name);
+  public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserBody body, ...)
+      => Ok(await _sender.Send(new UpdateUserCommand(id, body.Name), ct));
+  ```
+- **Role strings**: always use the `Roles` static class (`Roles.Administrator`, `Roles.Agent`, `Roles.Client`) in `[Authorize]` attributes — never hardcode strings
+- **Current user**: inject `ICurrentUserService` (Application layer interface) into controllers that need the authenticated user's ID or role — never parse JWT claims manually in controllers
 - Validation with FluentValidation in each use case, same file as the command
-- Organize Application by `Features/<Module>/`: `*Dto.cs` (DTOs + mapper), `*Queries.cs` (all queries + handlers), `*Commands.cs` (all commands + handlers + validators)
+- Organize Application by `Features/<Module>/`: `*Dto.cs`, `*Queries.cs`, `*Commands.cs`
 - Repositories via Domain interfaces, implemented in Infrastructure
 - Do not use `var` when the type is not obvious
 - Methods with a maximum of 20 lines — extract when needed
-- Portuguese names for domain entities, English for technical infrastructure
 
 ### Tests
 - One test file per handler
@@ -326,6 +398,16 @@ Never invert dependency direction. Domain must never import from other layers.
 - Zod for form validation
 - Never use `any` — always type everything
 
+## Authentication Details
+
+- JWT RS256 — asymmetric RSA 2048-bit key pair generated in memory at startup (`RsaKeyProvider`)
+- `KeyId` derived via SHA-256 of RSA modulus (no hardcode, unique per instance)
+- Access token: 15 min — claims: `sub`, `name`, `email`, `role` (ClaimTypes.Role URI), `jti`
+- Refresh token: 7 days, stored as SHA-256 hash in DB, rotation on refresh
+- Rate limit: max 5 login attempts per IP per minute (AspNetCoreRateLimit)
+- Fallback authorization policy: all routes require auth by default
+- Security headers middleware: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `X-XSS-Protection`
+
 ## Evaluation Criteria (weights)
 
 1. Technical knowledge (weight 2)
@@ -338,75 +420,10 @@ Never invert dependency direction. Domain must never import from other layers.
 
 **04/19/2026 at 23:59** — mandatory submission via repository + Pandapé
 
-## Recommended Implementation Order
+## Pending
 
-1. Base structure + Docker Compose + initial migrations
-2. JWT authentication (login, token generation, middleware)
-3. Users module (full CRUD)
-4. Availability module (prerequisite for appointments)
-5. Appointments module (creation, listing, actions, cancellation, completion)
-6. Reports module (queries + export)
-7. Unit tests for handlers
-8. Technical documentation (README, Mermaid diagrams)
-
-## STAGE 2 — JWT Authentication (Secure)
-
-**Estimate:** ~3h
-
-### Tokens
-
-- Access token with 15-minute expiration
-- Refresh token with 7-day expiration, stored in the database as a hash
-- **RS256** algorithm (asymmetric RSA key pair), do not use HS256
-- Access token claims:
-  - `sub` (userId)
-  - `name`
-  - `email`
-  - `role`
-  - `jti` (unique GUID for tracing)
-
-### RefreshToken Entity (Infrastructure)
-
-```csharp
-RefreshToken
-  - Id (Guid)
-  - UserId (Guid, FK)
-  - TokenHash (string)   // store SHA-256 hash, never store plain-text token
-  - ExpiresAt (DateTime)
-  - IsRevoked (bool)
-  - CreatedAt (DateTime)
-```
-
-### Authentication Endpoints
-
-| Method | Route | Description |
-|------|------|------|
-| POST | /api/auth/login | Validates credentials and returns `{ accessToken, refreshToken, expiresAt }` |
-| POST | /api/auth/refresh | Receives refresh token, issues a new pair, revokes the previous one (rotation) |
-| POST | /api/auth/logout | Revokes refresh token in the database |
-
-### Password Protection
-
-- BCrypt with work factor **12** (do not use 10)
-
-### Rate Limiting
-
-- Package: `AspNetCoreRateLimit`
-- Rule: maximum 5 login attempts per IP in 1 minute
-- Limit exceeded: return `429 Too Many Requests`
-- Configuration via `appsettings.json` (easy to demonstrate in Swagger)
-
-### Security Headers
-
-Custom middleware adding:
-
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
-- `Referrer-Policy: no-referrer`
-- `X-XSS-Protection: 1; mode=block`
-
-### Swagger
-
-- Bearer Token support configured
-- Request/response examples on all auth endpoints
-- Status code documentation: 200, 400, 401, 429
+- [ ] Frontend React (pasta vazia)
+- [ ] Dockerfiles de app (backend + frontend) + atualizar docker-compose
+- [ ] Reports module (FR4) — queries + CSV/XLSX export
+- [ ] Unit tests para novos handlers (Availability, Appointments)
+- [ ] README + diagramas Mermaid

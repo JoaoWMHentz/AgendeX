@@ -18,10 +18,8 @@ public sealed class AvailabilityController : ControllerBase
         _sender = sender;
     }
 
-    public sealed record CreateAvailabilityRequest(
-        Guid AgentId, WeekDay WeekDay, TimeOnly StartTime, TimeOnly EndTime);
-
-    public sealed record UpdateAvailabilityRequest(TimeOnly StartTime, TimeOnly EndTime);
+    // Id vem da rota — só os campos do body
+    public sealed record UpdateAvailabilityBody(TimeOnly StartTime, TimeOnly EndTime);
 
     [HttpGet("agent/{agentId:guid}")]
     [ProducesResponseType(typeof(IReadOnlyList<AvailabilityDto>), StatusCodes.Status200OK)]
@@ -43,36 +41,31 @@ public sealed class AvailabilityController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = Roles.Administrator)]
     [ProducesResponseType(typeof(AvailabilityDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
-        [FromBody] CreateAvailabilityRequest request, CancellationToken cancellationToken)
+        [FromBody] CreateAvailabilityCommand command, CancellationToken cancellationToken)
     {
-        AvailabilityDto result = await _sender.Send(
-            new CreateAvailabilityCommand(request.AgentId, request.WeekDay, request.StartTime, request.EndTime),
-            cancellationToken);
-
+        AvailabilityDto result = await _sender.Send(command, cancellationToken);
         return CreatedAtAction(nameof(GetByAgent), new { agentId = result.AgentId }, result);
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = Roles.Administrator)]
     [ProducesResponseType(typeof(AvailabilityDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
-        Guid id, [FromBody] UpdateAvailabilityRequest request, CancellationToken cancellationToken)
+        Guid id, [FromBody] UpdateAvailabilityBody body, CancellationToken cancellationToken)
     {
         AvailabilityDto result = await _sender.Send(
-            new UpdateAvailabilityCommand(id, request.StartTime, request.EndTime),
-            cancellationToken);
-
+            new UpdateAvailabilityCommand(id, body.StartTime, body.EndTime), cancellationToken);
         return Ok(result);
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = Roles.Administrator)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)

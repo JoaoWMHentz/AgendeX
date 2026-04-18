@@ -6,9 +6,10 @@ using AgendeX.WebAPI.Middlewares;
 using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Text.Json.Nodes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,21 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, jwtSecurityScheme);
 
     options.DocumentFilter<AllowAnonymousOperationFilter>();
+    options.OperationFilter<SwaggerExamplesOperationFilter>();
+
+    options.MapType<TimeOnly>(() => new OpenApiSchema
+    {
+        Type = JsonSchemaType.String,
+        Format = "time",
+        Example = JsonValue.Create("09:00:00")
+    });
+
+    options.MapType<DateOnly>(() => new OpenApiSchema
+    {
+        Type = JsonSchemaType.String,
+        Format = "date",
+        Example = JsonValue.Create("2026-04-25")
+    });
 });
 
 builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
@@ -38,6 +54,9 @@ builder.Services.Configure<IpRateLimitPolicies>(builder.Configuration.GetSection
 builder.Services.AddMemoryCache();
 builder.Services.AddInMemoryRateLimiting();
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AgendeX.Application.Common.Interfaces.ICurrentUserService, AgendeX.WebAPI.Services.CurrentUserService>();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);

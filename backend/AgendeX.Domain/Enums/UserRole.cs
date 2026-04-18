@@ -6,3 +6,10 @@ public enum UserRole
     Agent,
     Client
 }
+
+public static class Roles
+{
+    public const string Administrator = nameof(UserRole.Administrator);
+    public const string Agent = nameof(UserRole.Agent);
+    public const string Client = nameof(UserRole.Client);
+}

@@ -13,66 +13,32 @@ public sealed record CreateUserCommand(
     string Name,
     string Email,
     string Password,
-    UserRole Role,
-    string? CPF,
-    DateOnly? BirthDate,
-    string? Phone,
-    string? Notes
+    UserRole Role
 ) : IRequest<UserDto>;
 
 public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, UserDto>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IClientDetailRepository _clientDetailRepository;
     private readonly IPasswordHasher _passwordHasher;
 
-    public CreateUserCommandHandler(
-        IUserRepository userRepository,
-        IClientDetailRepository clientDetailRepository,
-        IPasswordHasher passwordHasher)
+    public CreateUserCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
-        _clientDetailRepository = clientDetailRepository;
         _passwordHasher = passwordHasher;
     }
 
     public async Task<UserDto> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        await EnsureEmailIsUniqueAsync(request.Email, cancellationToken);
+        User? existing = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
+        if (existing is not null)
+            throw new InvalidOperationException($"Email '{request.Email}' is already in use.");
 
         User user = new(request.Name, request.Email, _passwordHasher.Hash(request.Password), request.Role);
 
         await _userRepository.AddAsync(user, cancellationToken);
         await _userRepository.SaveChangesAsync(cancellationToken);
 
-        if (request.Role == UserRole.Client)
-            await CreateClientDetailAsync(user.Id, request, cancellationToken);
-
-        User created = await _userRepository.GetByIdAsync(user.Id, cancellationToken) ?? user;
-        return UserMapper.ToDto(created);
-    }
-
-    private async Task EnsureEmailIsUniqueAsync(string email, CancellationToken cancellationToken)
-    {
-        User? existing = await _userRepository.GetByEmailAsync(email, cancellationToken);
-        if (existing is not null)
-            throw new InvalidOperationException($"Email '{email}' is already in use.");
-    }
-
-    private async Task CreateClientDetailAsync(Guid userId, CreateUserCommand request, CancellationToken cancellationToken)
-    {
-        ClientDetail detail = new()
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            CPF = request.CPF!,
-            BirthDate = request.BirthDate!.Value,
-            Phone = request.Phone!,
-            Notes = request.Notes
-        };
-
-        await _clientDetailRepository.AddAsync(detail, cancellationToken);
-        await _clientDetailRepository.SaveChangesAsync(cancellationToken);
+        return UserMapper.ToDto(user);
     }
 }
 
@@ -84,36 +50,89 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
         RuleFor(c => c.Email).NotEmpty().EmailAddress().MaximumLength(180);
         RuleFor(c => c.Password).NotEmpty().MinimumLength(6);
         RuleFor(c => c.Role).IsInEnum();
+    }
+}
 
-        When(c => c.Role == UserRole.Client, () =>
+// ── SetClientDetail ─────────────────────────────────────────────────────────
+
+public sealed record SetClientDetailCommand(
+    Guid UserId,
+    string CPF,
+    DateOnly BirthDate,
+    string Phone,
+    string? Notes
+) : IRequest<UserDto>;
+
+public sealed class SetClientDetailCommandHandler : IRequestHandler<SetClientDetailCommand, UserDto>
+{
+    private readonly IUserRepository _userRepository;
+    private readonly IClientDetailRepository _clientDetailRepository;
+
+    public SetClientDetailCommandHandler(
+        IUserRepository userRepository,
+        IClientDetailRepository clientDetailRepository)
+    {
+        _userRepository = userRepository;
+        _clientDetailRepository = clientDetailRepository;
+    }
+
+    public async Task<UserDto> Handle(SetClientDetailCommand request, CancellationToken cancellationToken)
+    {
+        User user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken)
+            ?? throw new KeyNotFoundException($"User '{request.UserId}' not found.");
+
+        if (user.Role != UserRole.Client)
+            throw new InvalidOperationException("Client details can only be set for users with role 'Client'.");
+
+        ClientDetail? existing = await _clientDetailRepository.GetByUserIdAsync(request.UserId, cancellationToken);
+
+        if (existing is null)
         {
-            RuleFor(c => c.CPF).NotEmpty().MaximumLength(14);
-            RuleFor(c => c.BirthDate).NotNull();
-            RuleFor(c => c.Phone).NotEmpty().MaximumLength(20);
-        });
+            ClientDetail detail = new()
+            {
+                Id = Guid.NewGuid(),
+                UserId = request.UserId,
+                CPF = request.CPF,
+                BirthDate = request.BirthDate,
+                Phone = request.Phone,
+                Notes = request.Notes
+            };
+            await _clientDetailRepository.AddAsync(detail, cancellationToken);
+        }
+        else
+        {
+            existing.Update(request.CPF, request.BirthDate, request.Phone, request.Notes);
+        }
+
+        await _clientDetailRepository.SaveChangesAsync(cancellationToken);
+
+        User updated = await _userRepository.GetByIdAsync(user.Id, cancellationToken) ?? user;
+        return UserMapper.ToDto(updated);
+    }
+}
+
+public sealed class SetClientDetailCommandValidator : AbstractValidator<SetClientDetailCommand>
+{
+    public SetClientDetailCommandValidator()
+    {
+        RuleFor(c => c.UserId).NotEmpty();
+        RuleFor(c => c.CPF).NotEmpty().MaximumLength(14);
+        RuleFor(c => c.BirthDate).NotEmpty();
+        RuleFor(c => c.Phone).NotEmpty().MaximumLength(20);
     }
 }
 
 // ── UpdateUser ─────────────────────────────────────────────────────────────
 
-public sealed record UpdateUserCommand(
-    Guid Id,
-    string Name,
-    string? CPF,
-    DateOnly? BirthDate,
-    string? Phone,
-    string? Notes
-) : IRequest<UserDto>;
+public sealed record UpdateUserCommand(Guid Id, string Name) : IRequest<UserDto>;
 
 public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, UserDto>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IClientDetailRepository _clientDetailRepository;
 
-    public UpdateUserCommandHandler(IUserRepository userRepository, IClientDetailRepository clientDetailRepository)
+    public UpdateUserCommandHandler(IUserRepository userRepository)
     {
         _userRepository = userRepository;
-        _clientDetailRepository = clientDetailRepository;
     }
 
     public async Task<UserDto> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -124,25 +143,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
         user.Update(request.Name);
         await _userRepository.SaveChangesAsync(cancellationToken);
 
-        if (user.Role == UserRole.Client)
-            await UpdateClientDetailAsync(user.Id, request, cancellationToken);
-
-        User updated = await _userRepository.GetByIdAsync(user.Id, cancellationToken) ?? user;
-        return UserMapper.ToDto(updated);
-    }
-
-    private async Task UpdateClientDetailAsync(Guid userId, UpdateUserCommand request, CancellationToken cancellationToken)
-    {
-        ClientDetail? detail = await _clientDetailRepository.GetByUserIdAsync(userId, cancellationToken);
-        if (detail is null) return;
-
-        detail.Update(
-            request.CPF ?? detail.CPF,
-            request.BirthDate ?? detail.BirthDate,
-            request.Phone ?? detail.Phone,
-            request.Notes);
-
-        await _clientDetailRepository.SaveChangesAsync(cancellationToken);
+        return UserMapper.ToDto(user);
     }
 }
 

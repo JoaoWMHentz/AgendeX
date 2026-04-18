@@ -1,9 +1,9 @@
+using AgendeX.Application.Common.Interfaces;
 using AgendeX.Application.Features.Appointments;
 using AgendeX.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace AgendeX.WebAPI.Controllers;
 
@@ -13,30 +13,27 @@ namespace AgendeX.WebAPI.Controllers;
 public sealed class AppointmentsController : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly ICurrentUserService _currentUser;
 
-    public AppointmentsController(ISender sender)
+    public AppointmentsController(ISender sender, ICurrentUserService currentUser)
     {
         _sender = sender;
+        _currentUser = currentUser;
     }
 
-    public sealed record CreateAppointmentRequest(
+    // ClientId vem do token — só os campos do body
+    public sealed record CreateAppointmentBody(
         string Title, string? Description, int ServiceTypeId,
         Guid AgentId, DateOnly Date, TimeOnly Time, string? Notes);
 
-    public sealed record RejectAppointmentRequest(string RejectionReason);
+    // Id vem da rota — só o campo do body
+    public sealed record RejectBody(string RejectionReason);
+    public sealed record CompleteBody(string? ServiceSummary);
+    public sealed record ReassignBody(Guid NewAgentId);
 
-    public sealed record CompleteAppointmentRequest(string? ServiceSummary);
-
-    public sealed record ReassignAppointmentRequest(Guid NewAgentId);
-
-    private Guid CurrentUserId =>
-        Guid.Parse(User.FindFirstValue("sub") ?? throw new UnauthorizedAccessException("User not authenticated."));
-
-    private bool IsAdmin =>
-        User.IsInRole("Administrator");
-
-    private bool IsAgent =>
-        User.IsInRole("Agent");
+    private Guid CurrentUserId => _currentUser.UserId;
+    private bool IsAdmin => _currentUser.Role == UserRole.Administrator;
+    private bool IsAgent => _currentUser.Role == UserRole.Agent;
 
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<AppointmentDto>), StatusCodes.Status200OK)]
@@ -66,22 +63,22 @@ public sealed class AppointmentsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Client")]
+    [Authorize(Roles = Roles.Client)]
     [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
-        [FromBody] CreateAppointmentRequest request, CancellationToken cancellationToken)
+        [FromBody] CreateAppointmentBody body, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(new CreateAppointmentCommand(
-            request.Title, request.Description, request.ServiceTypeId,
-            CurrentUserId, request.AgentId, request.Date, request.Time, request.Notes),
+            body.Title, body.Description, body.ServiceTypeId,
+            CurrentUserId, body.AgentId, body.Date, body.Time, body.Notes),
             cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { id = appointment.Id }, appointment);
     }
 
     [HttpPut("{id:guid}/confirm")]
-    [Authorize(Roles = "Agent")]
+    [Authorize(Roles = Roles.Agent)]
     [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -93,20 +90,20 @@ public sealed class AppointmentsController : ControllerBase
     }
 
     [HttpPut("{id:guid}/reject")]
-    [Authorize(Roles = "Agent")]
+    [Authorize(Roles = Roles.Agent)]
     [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Reject(
-        Guid id, [FromBody] RejectAppointmentRequest request, CancellationToken cancellationToken)
+        Guid id, [FromBody] RejectBody body, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new RejectAppointmentCommand(id, CurrentUserId, request.RejectionReason), cancellationToken);
+            new RejectAppointmentCommand(id, CurrentUserId, body.RejectionReason), cancellationToken);
         return Ok(appointment);
     }
 
     [HttpPut("{id:guid}/cancel")]
-    [Authorize(Roles = "Client,Administrator")]
+    [Authorize(Roles = $"{Roles.Client},{Roles.Administrator}")]
     [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -118,28 +115,28 @@ public sealed class AppointmentsController : ControllerBase
     }
 
     [HttpPut("{id:guid}/complete")]
-    [Authorize(Roles = "Agent")]
+    [Authorize(Roles = Roles.Agent)]
     [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Complete(
-        Guid id, [FromBody] CompleteAppointmentRequest request, CancellationToken cancellationToken)
+        Guid id, [FromBody] CompleteBody body, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new CompleteAppointmentCommand(id, CurrentUserId, request.ServiceSummary), cancellationToken);
+            new CompleteAppointmentCommand(id, CurrentUserId, body.ServiceSummary), cancellationToken);
         return Ok(appointment);
     }
 
     [HttpPut("{id:guid}/reassign")]
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = Roles.Administrator)]
     [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Reassign(
-        Guid id, [FromBody] ReassignAppointmentRequest request, CancellationToken cancellationToken)
+        Guid id, [FromBody] ReassignBody body, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new ReassignAppointmentCommand(id, request.NewAgentId), cancellationToken);
+            new ReassignAppointmentCommand(id, body.NewAgentId), cancellationToken);
         return Ok(appointment);
     }
 }

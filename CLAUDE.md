@@ -20,10 +20,11 @@ Web system for managing service appointments between clients and agents/speciali
 
 ### Frontend
 - React 18 + TypeScript + Vite
+- React Router DOM
 - React Query (TanStack Query)
 - React Hook Form + Zod
 - Axios
-- Tailwind CSS + shadcn/ui
+- Ant Design (UI library)
 - Zustand
 
 ### Infrastructure
@@ -233,87 +234,148 @@ Infrastructure → Domain + Application
 ## Current File Structure
 
 ```
-AgendeX.Domain/
-├── Entities/
-│   └── User.cs, ClientDetail.cs, RefreshToken.cs
-│   └── ServiceType.cs, AgentAvailability.cs, Appointment.cs
-├── Enums/
-│   └── UserRole.cs           # Administrator | Agent | Client
-│   └── WeekDay.cs            # Sunday=0 ... Saturday=6
-│   └── AppointmentStatus.cs  # PendingConfirmation | Confirmed | Rejected | Canceled | Completed
-└── Interfaces/
-    └── IUserRepository.cs, IClientDetailRepository.cs, IRefreshTokenRepository.cs
-    └── IServiceTypeRepository.cs, IAgentAvailabilityRepository.cs, IAppointmentRepository.cs
-
-AgendeX.Application/
-├── Common/
-│   ├── Behaviors/
-│   │   └── ValidationBehavior.cs
-│   └── Interfaces/
-│       └── IPasswordHasher.cs, ITokenService.cs
-├── Features/
-│   ├── Auth/
-│   │   ├── AuthDto.cs          # AuthResponseDto
-│   │   └── AuthCommands.cs     # Login + Refresh + Logout (Command + Handler + Validator each)
-│   ├── Users/
-│   │   ├── UserDto.cs          # UserDto + ClientDetailDto + UserMapper
-│   │   ├── UserQueries.cs      # GetUsers + GetUserById
-│   │   └── UserCommands.cs     # CreateUser + UpdateUser + DeleteUser + SetClientDetail
-│   ├── ServiceTypes/
-│   │   ├── ServiceTypeDto.cs
-│   │   └── ServiceTypeQueries.cs   # GetServiceTypes + GetServiceTypeById
-│   ├── Availability/
-│   │   ├── AvailabilityDto.cs       # AvailabilityDto + AvailableSlotDto
-│   │   ├── AvailabilityQueries.cs   # GetAvailabilitiesByAgent + GetAvailableSlots
-│   │   └── AvailabilityCommands.cs  # CreateAvailability + UpdateAvailability + DeleteAvailability
-│   └── Appointments/
-│       ├── AppointmentDto.cs        # AppointmentDto + AppointmentMapper
-│       ├── AppointmentQueries.cs    # GetAppointments + GetAppointmentById
-│       └── AppointmentCommands.cs   # Create + Confirm + Reject + Cancel + Complete + Reassign
-└── DependencyInjection.cs
-
-AgendeX.Infrastructure/
-├── Persistence/
-│   ├── ApplicationDbContext.cs
-│   ├── Configurations/
-│   │   └── UserConfiguration.cs, ClientDetailConfiguration.cs, RefreshTokenConfiguration.cs
-│   │   └── ServiceTypeConfiguration.cs, AgentAvailabilityConfiguration.cs, AppointmentConfiguration.cs
-│   ├── Migrations/
-│   │   └── 20260417235513_InitialCreate.cs
-│   │   └── 20260418172619_AddAvailabilityAndAppointments.cs
-│   │   └── ApplicationDbContextModelSnapshot.cs
-│   └── Repositories/
-│       └── UserRepository.cs, ClientDetailRepository.cs, RefreshTokenRepository.cs
-│       └── ServiceTypeRepository.cs, AgentAvailabilityRepository.cs, AppointmentRepository.cs
-├── Services/
-│   └── TokenService.cs, PasswordHasher.cs
-├── Identity/
-│   └── JwtOptions.cs, RsaKeyProvider.cs   # RSA key pair gerado em memória com KeyId derivado via SHA-256
-└── DependencyInjection.cs
-
-AgendeX.WebAPI/
-├── Controllers/
-│   └── AuthController.cs           # POST /api/auth/login, /refresh, /logout
-│   └── UsersController.cs          # GET/POST/PUT/DELETE /api/users + PUT /api/users/{id}/client-detail
-│   └── ServiceTypesController.cs   # GET /api/servicetypes, GET /api/servicetypes/{id}
-│   └── AvailabilityController.cs   # GET /api/availability/agent/{id}, GET /api/availability/slots, POST/PUT/DELETE
-│   └── AppointmentsController.cs   # GET/POST /api/appointments + PUT /confirm /reject /cancel /complete /reassign
-├── Middlewares/
-│   └── SecurityHeadersMiddleware.cs
-│   └── GlobalExceptionHandler.cs   # ValidationException→400, KeyNotFound→404, Unauthorized→401, other→500
-│   └── AuthorizeOperationFilter.cs # Swagger: remove lock em /api/auth/*, adiciona JWT nos demais
-└── Program.cs
-
-AgendeX.Tests/
-├── Application/
-│   └── Auth/
-│       └── AuthFlowTests.cs, LoginCommandHandlerTests.cs, RefreshTokenCommandHandlerTests.cs
-│       └── LogoutCommandHandlerTests.cs, AuthValidatorsTests.cs
-└── Infrastructure/
-    ├── Auth/
-    │   └── TokenServiceTests.cs, PasswordHasherTests.cs, RsaKeyProviderTests.cs
-    └── Persistence/
-        └── UserRepositoryTests.cs, RefreshTokenRepositoryTests.cs, EntityConfigurationTests.cs
+.
+├── backend/
+│   ├── AgendeX.slnx
+│   ├── AgendeX.Application/
+│   │   ├── Common/
+│   │   │   ├── Behaviors/
+│   │   │   │   └── ValidationBehavior.cs
+│   │   │   └── Interfaces/
+│   │   │       ├── ICurrentUserService.cs
+│   │   │       ├── IPasswordHasher.cs
+│   │   │       └── ITokenService.cs
+│   │   ├── Features/
+│   │   │   ├── Appointments/
+│   │   │   │   ├── AppointmentDto.cs
+│   │   │   │   ├── CancelAppointment/
+│   │   │   │   ├── CompleteAppointment/
+│   │   │   │   ├── ConfirmAppointment/
+│   │   │   │   ├── CreateAppointment/
+│   │   │   │   ├── GetAppointmentById/
+│   │   │   │   ├── GetAppointments/
+│   │   │   │   ├── ReassignAppointment/
+│   │   │   │   └── RejectAppointment/
+│   │   │   ├── Auth/
+│   │   │   │   ├── AuthDto.cs
+│   │   │   │   ├── Login/
+│   │   │   │   ├── Logout/
+│   │   │   │   └── RefreshToken/
+│   │   │   ├── Availability/
+│   │   │   │   ├── AvailabilityDto.cs
+│   │   │   │   ├── CreateAvailability/
+│   │   │   │   ├── DeleteAvailability/
+│   │   │   │   ├── GetAvailableSlots/
+│   │   │   │   ├── GetAvailabilitiesByAgent/
+│   │   │   │   └── UpdateAvailability/
+│   │   │   ├── ServiceTypes/
+│   │   │   │   ├── ServiceTypeDto.cs
+│   │   │   │   ├── GetServiceTypeById/
+│   │   │   │   └── GetServiceTypes/
+│   │   │   └── Users/
+│   │   │       ├── UserDto.cs
+│   │   │       ├── CreateUser/
+│   │   │       ├── DeleteUser/
+│   │   │       ├── GetUserById/
+│   │   │       ├── GetUsers/
+│   │   │       ├── SetClientDetail/
+│   │   │       └── UpdateUser/
+│   │   └── DependencyInjection.cs
+│   ├── AgendeX.Domain/
+│   │   ├── Entities/
+│   │   │   ├── AgentAvailability.cs
+│   │   │   ├── Appointment.cs
+│   │   │   ├── ClientDetail.cs
+│   │   │   ├── RefreshToken.cs
+│   │   │   ├── ServiceType.cs
+│   │   │   └── User.cs
+│   │   ├── Enums/
+│   │   │   ├── AppointmentStatus.cs
+│   │   │   ├── UserRole.cs
+│   │   │   └── WeekDay.cs
+│   │   └── Interfaces/
+│   │       ├── IAgentAvailabilityRepository.cs
+│   │       ├── IAppointmentRepository.cs
+│   │       ├── IClientDetailRepository.cs
+│   │       ├── IRefreshTokenRepository.cs
+│   │       ├── IServiceTypeRepository.cs
+│   │       └── IUserRepository.cs
+│   ├── AgendeX.Infrastructure/
+│   │   ├── DependencyInjection.cs
+│   │   ├── Identity/
+│   │   │   ├── JwtOptions.cs
+│   │   │   └── RsaKeyProvider.cs
+│   │   ├── Persistence/
+│   │   │   ├── ApplicationDbContext.cs
+│   │   │   ├── Configurations/
+│   │   │   │   ├── AgentAvailabilityConfiguration.cs
+│   │   │   │   ├── AppointmentConfiguration.cs
+│   │   │   │   ├── ClientDetailConfiguration.cs
+│   │   │   │   ├── RefreshTokenConfiguration.cs
+│   │   │   │   ├── ServiceTypeConfiguration.cs
+│   │   │   │   └── UserConfiguration.cs
+│   │   │   ├── Migrations/
+│   │   │   │   ├── 20260417235513_InitialCreate.cs
+│   │   │   │   ├── 20260418172619_AddAvailabilityAndAppointments.cs
+│   │   │   │   └── ApplicationDbContextModelSnapshot.cs
+│   │   │   └── Repositories/
+│   │   │       ├── AgentAvailabilityRepository.cs
+│   │   │       ├── AppointmentRepository.cs
+│   │   │       ├── ClientDetailRepository.cs
+│   │   │       ├── RefreshTokenRepository.cs
+│   │   │       ├── ServiceTypeRepository.cs
+│   │   │       └── UserRepository.cs
+│   │   └── Services/
+│   │       ├── PasswordHasher.cs
+│   │       └── TokenService.cs
+│   ├── AgendeX.Tests/
+│   │   ├── Application/
+│   │   │   ├── Appointments/
+│   │   │   │   ├── AppointmentLifecycleHandlersTests.cs
+│   │   │   │   ├── AppointmentQueriesTests.cs
+│   │   │   │   ├── AppointmentValidatorsTests.cs
+│   │   │   │   ├── CreateAppointmentCommandHandlerTests.cs
+│   │   │   │   └── ReassignAppointmentCommandHandlerTests.cs
+│   │   │   ├── Availability/
+│   │   │   │   ├── AvailabilityQueriesTests.cs
+│   │   │   │   ├── AvailabilityValidatorsTests.cs
+│   │   │   │   ├── CreateAvailabilityCommandHandlerTests.cs
+│   │   │   │   └── UpdateAndDeleteAvailabilityHandlersTests.cs
+│   │   │   └── Common/
+│   │   │       └── EntityTestFactory.cs
+│   │   └── Infrastructure/
+│   │       ├── Auth/
+│   │       │   ├── PasswordHasherTests.cs
+│   │       │   ├── RsaKeyProviderTests.cs
+│   │       │   └── TokenServiceTests.cs
+│   │       └── Persistence/
+│   │           ├── EntityConfigurationTests.cs
+│   │           ├── RefreshTokenRepositoryTests.cs
+│   │           └── UserRepositoryTests.cs
+│   ├── AgendeX.WebAPI/
+│   │   ├── Controllers/
+│   │   │   ├── AppointmentsController.cs
+│   │   │   ├── AuthController.cs
+│   │   │   ├── AvailabilityController.cs
+│   │   │   ├── ServiceTypesController.cs
+│   │   │   └── UsersController.cs
+│   │   ├── Middlewares/
+│   │   │   ├── AuthorizeOperationFilter.cs
+│   │   │   ├── GlobalExceptionHandler.cs
+│   │   │   ├── SecurityHeadersMiddleware.cs
+│   │   │   └── SwaggerExamplesOperationFilter.cs
+│   │   ├── Properties/
+│   │   ├── Services/
+│   │   │   └── CurrentUserService.cs
+│   │   ├── appsettings.json
+│   │   ├── AgendeX.WebAPI.csproj
+│   │   ├── AgendeX.WebAPI.csproj.user
+│   │   ├── Dockerfile
+│   │   └── Program.cs
+│   └── scripts/
+│       └── seed-auth-user.sql
+├── frontend/
+└── README.md
 ```
 
 ## API Endpoints (implemented)
@@ -393,10 +455,58 @@ AgendeX.Tests/
 
 ### Frontend
 - Functional components with strict TypeScript
+- Ant Design as the primary UI library in this MVP (do not mix with shadcn/ui in this phase)
 - Custom hooks for business logic (never directly in components)
 - React Query for cache and loading/error states
 - Zod for form validation
 - Never use `any` — always type everything
+
+## Frontend Plan (Ant Design)
+
+### Goal
+- Deliver a simple, efficient, and well-organized frontend using Ant Design, aligned with the current API and business rules.
+
+### Architecture Decisions
+- UI library: Ant Design
+- Data/state: React Query for server state + Zustand for lightweight session/global state
+- Forms: React Hook Form + Zod
+- HTTP: Axios with interceptors for JWT access token and refresh token flow
+- Routing: React Router DOM with role-based route guards
+
+### Folder Organization (frontend/src)
+- app (providers, router, bootstrap)
+- shared (common ui wrappers, utils, constants, types)
+- services (api client, auth/token management, endpoint helpers)
+- features/auth
+- features/users
+- features/appointments
+- features/availability
+- features/service-types
+- features/reports (initial scaffold only in first delivery)
+
+### Delivery Phases
+1. Foundation
+  - Bootstrap Vite + React + TypeScript project
+  - Install core libs (Ant Design, React Query, React Hook Form, Zod, Axios, Zustand, Router)
+  - Configure providers, app layout shell, and environment variables
+2. Authentication and Access
+  - Login, logout, token refresh flow
+  - Protected routes and role guards (Administrator, Agent, Client)
+3. Core Modules (MVP)
+  - Appointments: list with filters, detail, and role-based actions
+  - Availability: CRUD for admin and slots query
+  - Users: list/create/update/set client detail
+  - Service Types: list for filters/select inputs
+4. UX and Error Handling
+  - Central API error mapping to user-friendly messages
+  - Consistent loading, empty states, and success/error feedback
+5. Infrastructure
+  - Frontend Dockerfile
+  - docker-compose update to orchestrate backend + frontend + database
+
+### Scope Notes
+- Reports module (FR4) starts with navigation and structure; advanced exports (CSV/XLSX) can be delivered in a subsequent phase.
+- Prioritize completion of FR1, FR2, and FR3 with stable auth and permissions.
 
 ## Authentication Details
 
@@ -422,8 +532,9 @@ AgendeX.Tests/
 
 ## Pending
 
-- [ ] Frontend React (pasta vazia)
-- [ ] Dockerfiles de app (backend + frontend) + atualizar docker-compose
+- [ ] Frontend React com Ant Design (estrutura inicial + layout base)
+- [ ] Fluxo de autenticação (login/refresh/logout) e guards por role
+- [ ] Módulos prioritários FR1, FR2 e FR3 no frontend
+- [ ] Dockerfile do frontend e atualização do docker-compose para orquestrar a aplicação
 - [ ] Reports module (FR4) — queries + CSV/XLSX export
-- [ ] Unit tests para novos handlers (Availability, Appointments)
-- [ ] README + diagramas Mermaid
+- [ ] Expandir a documentação com README e diagramas Mermaid

@@ -1,6 +1,4 @@
-using AgendeX.Application.Features.Auth.Commands.Login;
-using AgendeX.Application.Features.Auth.Commands.Logout;
-using AgendeX.Application.Features.Auth.Commands.RefreshToken;
+using AgendeX.Application.Features.Auth;
 using FluentAssertions;
 
 namespace AgendeX.Tests.Application.Auth;

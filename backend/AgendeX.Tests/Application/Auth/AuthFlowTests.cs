@@ -1,7 +1,5 @@
 using AgendeX.Application.Common.Interfaces;
-using AgendeX.Application.Features.Auth.Commands.Login;
-using AgendeX.Application.Features.Auth.Commands.Logout;
-using AgendeX.Application.Features.Auth.Commands.RefreshToken;
+using AgendeX.Application.Features.Auth;
 using AgendeX.Domain.Entities;
 using AgendeX.Domain.Enums;
 using AgendeX.Domain.Interfaces;
@@ -53,10 +51,9 @@ public sealed class AuthFlowTests
     {
         private readonly Dictionary<string, User> _usersByEmail = new(StringComparer.OrdinalIgnoreCase);
 
-        public void Add(User user)
-        {
-            _usersByEmail[user.Email] = user;
-        }
+        public void Add(User user) => _usersByEmail[user.Email] = user;
+
+        public User? FindById(Guid userId) => _usersByEmail.Values.FirstOrDefault(u => u.Id == userId);
 
         public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken)
         {
@@ -64,10 +61,19 @@ public sealed class AuthFlowTests
             return Task.FromResult(user);
         }
 
-        public User? FindById(Guid userId)
+        public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+            => Task.FromResult(_usersByEmail.Values.FirstOrDefault(u => u.Id == id));
+
+        public Task<IReadOnlyList<User>> GetAllAsync(UserRole? role, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<User>>(_usersByEmail.Values.ToList());
+
+        public Task AddAsync(User user, CancellationToken cancellationToken)
         {
-            return _usersByEmail.Values.FirstOrDefault(user => user.Id == userId);
+            _usersByEmail[user.Email] = user;
+            return Task.CompletedTask;
         }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
     private sealed class FakeRefreshTokenRepository : IRefreshTokenRepository

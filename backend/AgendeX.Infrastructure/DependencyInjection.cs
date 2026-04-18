@@ -24,6 +24,7 @@ public static class DependencyInjection
         services.AddSingleton<RsaKeyProvider>();
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IClientDetailRepository, ClientDetailRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, TokenService>();

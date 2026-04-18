@@ -33,7 +33,7 @@ public class ClientDetailConfiguration : IEntityTypeConfiguration<ClientDetail>
             .IsUnique();
 
         builder.HasOne(clientDetail => clientDetail.User)
-            .WithOne()
+            .WithOne(user => user.ClientDetail)
             .HasForeignKey<ClientDetail>(clientDetail => clientDetail.UserId)
             .OnDelete(DeleteBehavior.Cascade);
     }

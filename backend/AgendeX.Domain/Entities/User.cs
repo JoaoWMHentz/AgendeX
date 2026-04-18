@@ -30,6 +30,13 @@ public class User
         PasswordHash = newPasswordHash;
     }
 
+    public ClientDetail? ClientDetail { get; private set; }
+
+    public void Update(string name)
+    {
+        Name = name;
+    }
+
     public void Deactivate() => IsActive = false;
 
     public void Activate() => IsActive = true;

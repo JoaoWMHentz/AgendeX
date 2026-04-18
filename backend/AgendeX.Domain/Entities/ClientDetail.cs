@@ -10,4 +10,12 @@ public class ClientDetail
     public string? Notes { get; set; }
 
     public User User { get; set; } = null!;
+
+    public void Update(string cpf, DateOnly birthDate, string phone, string? notes)
+    {
+        CPF = cpf;
+        BirthDate = birthDate;
+        Phone = phone;
+        Notes = notes;
+    }
 }

@@ -1,5 +1,5 @@
 using AgendeX.Application.Common.Interfaces;
-using AgendeX.Application.Features.Auth.Commands.RefreshToken;
+using AgendeX.Application.Features.Auth;
 using AgendeX.Domain.Entities;
 using AgendeX.Domain.Enums;
 using AgendeX.Domain.Interfaces;

@@ -1,6 +1,6 @@
-namespace AgendeX.Application.Features.Auth.Common;
+namespace AgendeX.Application.Features.Auth;
 
-public class AuthResponseDto
+public sealed class AuthResponseDto
 {
     public string AccessToken { get; init; } = string.Empty;
     public string RefreshToken { get; init; } = string.Empty;

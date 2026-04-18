@@ -1,8 +1,4 @@
-using AgendeX.Application.Features.Auth.Commands.Login;
-using AgendeX.Application.Features.Auth.Commands.Logout;
-using AgendeX.Application.Features.Auth.Commands.RefreshToken;
-using AgendeX.Application.Features.Auth.Common;
-using AgendeX.WebAPI.Models.Auth;
+using AgendeX.Application.Features.Auth;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +18,10 @@ public sealed class AuthController : ControllerBase
         _sender = sender;
     }
 
+    public sealed record LoginRequest(string Email, string Password);
+    public sealed record RefreshRequest(string RefreshToken);
+    public sealed record LogoutRequest(string RefreshToken);
+
     [HttpPost("login")]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -34,9 +34,9 @@ public sealed class AuthController : ControllerBase
             AuthResponseDto response = await _sender.Send(new LoginCommand(request.Email, request.Password), cancellationToken);
             return Ok(response);
         }
-        catch (ValidationException exception)
+        catch (ValidationException ex)
         {
-            return BadRequest(new { errors = exception.Errors.Select(error => error.ErrorMessage) });
+            return BadRequest(new { errors = ex.Errors.Select(e => e.ErrorMessage) });
         }
         catch (UnauthorizedAccessException)
         {
@@ -55,9 +55,9 @@ public sealed class AuthController : ControllerBase
             AuthResponseDto response = await _sender.Send(new RefreshTokenCommand(request.RefreshToken), cancellationToken);
             return Ok(response);
         }
-        catch (ValidationException exception)
+        catch (ValidationException ex)
         {
-            return BadRequest(new { errors = exception.Errors.Select(error => error.ErrorMessage) });
+            return BadRequest(new { errors = ex.Errors.Select(e => e.ErrorMessage) });
         }
         catch (UnauthorizedAccessException)
         {
@@ -75,9 +75,9 @@ public sealed class AuthController : ControllerBase
             await _sender.Send(new LogoutCommand(request.RefreshToken), cancellationToken);
             return NoContent();
         }
-        catch (ValidationException exception)
+        catch (ValidationException ex)
         {
-            return BadRequest(new { errors = exception.Errors.Select(error => error.ErrorMessage) });
+            return BadRequest(new { errors = ex.Errors.Select(e => e.ErrorMessage) });
         }
     }
 }

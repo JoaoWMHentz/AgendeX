@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    container_name: agendex-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agendex
+      POSTGRES_USER: agendex
+      POSTGRES_PASSWORD: agendex
+    ports:
+      - "5432:5432"
+    volumes:
+      - agendex_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agendex -d agendex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  agendex_pgdata:

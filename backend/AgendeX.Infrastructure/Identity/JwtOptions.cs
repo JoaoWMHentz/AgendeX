@@ -1,4 +1,4 @@
-namespace AgendeX.Infrastructure.Auth;
+namespace AgendeX.Infrastructure.Identity;
 
 public sealed class JwtOptions
 {

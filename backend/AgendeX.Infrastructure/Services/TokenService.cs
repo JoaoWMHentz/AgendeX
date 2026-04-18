@@ -1,5 +1,6 @@
 using AgendeX.Application.Common.Interfaces;
 using AgendeX.Domain.Entities;
+using AgendeX.Infrastructure.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -7,7 +8,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace AgendeX.Infrastructure.Auth;
+namespace AgendeX.Infrastructure.Services;
 
 public sealed class TokenService : ITokenService
 {

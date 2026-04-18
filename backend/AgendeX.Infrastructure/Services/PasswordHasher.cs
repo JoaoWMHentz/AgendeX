@@ -1,6 +1,6 @@
 using AgendeX.Application.Common.Interfaces;
 
-namespace AgendeX.Infrastructure.Auth;
+namespace AgendeX.Infrastructure.Services;
 
 public sealed class PasswordHasher : IPasswordHasher
 {

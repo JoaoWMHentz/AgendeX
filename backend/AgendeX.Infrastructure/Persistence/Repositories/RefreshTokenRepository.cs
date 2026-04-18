@@ -1,15 +1,15 @@
 using AgendeX.Domain.Entities;
 using AgendeX.Domain.Interfaces;
-using AgendeX.Infrastructure.Data;
+using AgendeX.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace AgendeX.Infrastructure.Repositories;
+namespace AgendeX.Infrastructure.Persistence.Repositories;
 
 public sealed class RefreshTokenRepository : IRefreshTokenRepository
 {
-    private readonly AgendeXDbContext _dbContext;
+    private readonly ApplicationDbContext _dbContext;
 
-    public RefreshTokenRepository(AgendeXDbContext dbContext)
+    public RefreshTokenRepository(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
     }

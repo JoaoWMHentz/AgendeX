@@ -1,8 +1,9 @@
 using AgendeX.Application.Common.Interfaces;
 using AgendeX.Domain.Interfaces;
-using AgendeX.Infrastructure.Auth;
-using AgendeX.Infrastructure.Data;
-using AgendeX.Infrastructure.Repositories;
+using AgendeX.Infrastructure.Identity;
+using AgendeX.Infrastructure.Persistence;
+using AgendeX.Infrastructure.Persistence.Repositories;
+using AgendeX.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,7 @@ public static class DependencyInjection
         string connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("Connection string 'Default' was not found.");
 
-        services.AddDbContext<AgendeXDbContext>(options =>
+        services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString));
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));

@@ -1,11 +1,11 @@
 using AgendeX.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace AgendeX.Infrastructure.Data;
+namespace AgendeX.Infrastructure.Persistence;
 
-public class AgendeXDbContext : DbContext
+public class ApplicationDbContext : DbContext
 {
-    public AgendeXDbContext(DbContextOptions<AgendeXDbContext> options)
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
     }
@@ -16,7 +16,7 @@ public class AgendeXDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AgendeXDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
 }

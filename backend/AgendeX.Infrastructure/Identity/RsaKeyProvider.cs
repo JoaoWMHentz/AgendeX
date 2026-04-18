@@ -1,7 +1,7 @@
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 
-namespace AgendeX.Infrastructure.Auth;
+namespace AgendeX.Infrastructure.Identity;
 
 public sealed class RsaKeyProvider : IDisposable
 {

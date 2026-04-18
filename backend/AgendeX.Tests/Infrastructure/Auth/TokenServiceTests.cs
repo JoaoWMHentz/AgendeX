@@ -1,6 +1,7 @@
 using AgendeX.Domain.Entities;
 using AgendeX.Domain.Enums;
-using AgendeX.Infrastructure.Auth;
+using AgendeX.Infrastructure.Identity;
+using AgendeX.Infrastructure.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

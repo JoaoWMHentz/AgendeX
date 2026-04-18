@@ -2,7 +2,7 @@ using AgendeX.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace AgendeX.Infrastructure.Data.Configurations;
+namespace AgendeX.Infrastructure.Persistence.Configurations;
 
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {

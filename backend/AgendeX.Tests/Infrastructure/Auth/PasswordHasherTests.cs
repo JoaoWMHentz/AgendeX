@@ -1,4 +1,4 @@
-using AgendeX.Infrastructure.Auth;
+using AgendeX.Infrastructure.Services;
 using FluentAssertions;
 
 namespace AgendeX.Tests.Infrastructure.Auth;

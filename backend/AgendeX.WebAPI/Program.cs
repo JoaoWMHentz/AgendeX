@@ -1,7 +1,7 @@
 using AgendeX.Application;
 using AgendeX.Infrastructure;
-using AgendeX.Infrastructure.Auth;
-using AgendeX.Infrastructure.Data;
+using AgendeX.Infrastructure.Identity;
+using AgendeX.Infrastructure.Persistence;
 using AgendeX.WebAPI.Middlewares;
 using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -78,7 +78,7 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<AgendeXDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.Migrate();
 }
 

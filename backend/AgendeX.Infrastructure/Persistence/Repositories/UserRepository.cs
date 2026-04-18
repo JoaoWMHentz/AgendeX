@@ -27,12 +27,14 @@ public sealed class UserRepository : IUserRepository
     {
         return _dbContext.Users
             .Include(user => user.ClientDetail)
-            .FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(user => user.Id == id && user.IsActive, cancellationToken);
     }
 
     public async Task<IReadOnlyList<User>> GetAllAsync(UserRole? role, CancellationToken cancellationToken)
     {
-        IQueryable<User> query = _dbContext.Users.Include(user => user.ClientDetail);
+        IQueryable<User> query = _dbContext.Users
+            .Include(user => user.ClientDetail)
+            .Where(user => user.IsActive);
 
         if (role.HasValue)
             query = query.Where(user => user.Role == role.Value);

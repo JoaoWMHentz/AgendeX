@@ -1,6 +1,5 @@
 using AgendeX.Application.Features.Users;
 using AgendeX.Domain.Enums;
-using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,15 +38,8 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            UserDto user = await _sender.Send(new GetUserByIdQuery(id), cancellationToken);
-            return Ok(user);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        UserDto user = await _sender.Send(new GetUserByIdQuery(id), cancellationToken);
+        return Ok(user);
     }
 
     [HttpPost]
@@ -55,23 +47,12 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateUserRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            UserDto user = await _sender.Send(new CreateUserCommand(
-                request.Name, request.Email, request.Password, request.Role,
-                request.CPF, request.BirthDate, request.Phone, request.Notes
-            ), cancellationToken);
+        UserDto user = await _sender.Send(new CreateUserCommand(
+            request.Name, request.Email, request.Password, request.Role,
+            request.CPF, request.BirthDate, request.Phone, request.Notes
+        ), cancellationToken);
 
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
-        }
-        catch (ValidationException ex)
-        {
-            return BadRequest(new { errors = ex.Errors.Select(e => e.ErrorMessage) });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
     }
 
     [HttpPut("{id:guid}")]
@@ -80,22 +61,11 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            UserDto user = await _sender.Send(new UpdateUserCommand(
-                id, request.Name, request.CPF, request.BirthDate, request.Phone, request.Notes
-            ), cancellationToken);
+        UserDto user = await _sender.Send(new UpdateUserCommand(
+            id, request.Name, request.CPF, request.BirthDate, request.Phone, request.Notes
+        ), cancellationToken);
 
-            return Ok(user);
-        }
-        catch (ValidationException ex)
-        {
-            return BadRequest(new { errors = ex.Errors.Select(e => e.ErrorMessage) });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        return Ok(user);
     }
 
     [HttpDelete("{id:guid}")]
@@ -103,14 +73,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        try
-        {
-            await _sender.Send(new DeleteUserCommand(id), cancellationToken);
-            return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        await _sender.Send(new DeleteUserCommand(id), cancellationToken);
+        return NoContent();
     }
 }

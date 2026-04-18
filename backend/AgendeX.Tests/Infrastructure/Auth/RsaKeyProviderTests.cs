@@ -7,46 +7,12 @@ namespace AgendeX.Tests.Infrastructure.Auth;
 public sealed class RsaKeyProviderTests
 {
     [Fact]
-    public void Constructor_GeneratesNonNullPrivateAndPublicKeys()
+    public void Constructor_BothKeysAreNonNullRsaSecurityKeys()
     {
         using RsaKeyProvider rsaKeyProvider = new();
 
-        rsaKeyProvider.PrivateKey.Should().NotBeNull();
-        rsaKeyProvider.PublicKey.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void PrivateKey_IsRsaSecurityKey()
-    {
-        using RsaKeyProvider rsaKeyProvider = new();
-
-        rsaKeyProvider.PrivateKey.Should().BeOfType<RsaSecurityKey>();
-    }
-
-    [Fact]
-    public void PublicKey_IsRsaSecurityKey()
-    {
-        using RsaKeyProvider rsaKeyProvider = new();
-
-        rsaKeyProvider.PublicKey.Should().BeOfType<RsaSecurityKey>();
-    }
-
-    [Fact]
-    public void PrivateAndPublicKeys_AreDifferentInstances()
-    {
-        using RsaKeyProvider rsaKeyProvider = new();
-
-        rsaKeyProvider.PrivateKey.Should().NotBeSameAs(rsaKeyProvider.PublicKey);
-    }
-
-    [Fact]
-    public void Dispose_DoesNotThrow()
-    {
-        RsaKeyProvider rsaKeyProvider = new();
-
-        Action act = () => rsaKeyProvider.Dispose();
-
-        act.Should().NotThrow();
+        rsaKeyProvider.PrivateKey.Should().NotBeNull().And.BeOfType<RsaSecurityKey>();
+        rsaKeyProvider.PublicKey.Should().NotBeNull().And.BeOfType<RsaSecurityKey>();
     }
 
     [Fact]

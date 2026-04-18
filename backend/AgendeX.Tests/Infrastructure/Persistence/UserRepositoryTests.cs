@@ -18,6 +18,8 @@ public sealed class UserRepositoryTests
         return new ApplicationDbContext(options);
     }
 
+    // ── GetByEmailAsync ────────────────────────────────────────────────────
+
     [Fact]
     public async Task GetByEmailAsync_UserExists_ReturnsUser()
     {
@@ -72,5 +74,100 @@ public sealed class UserRepositoryTests
 
         result.Should().NotBeNull();
         result!.Name.Should().Be("Diana");
+    }
+
+    // ── GetByIdAsync ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetByIdAsync_ActiveUser_ReturnsUser()
+    {
+        await using ApplicationDbContext context = CreateContext();
+        User user = new("Eva", "eva@email.com", "hash", UserRole.Client);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        UserRepository repository = new(context);
+        User? result = await repository.GetByIdAsync(user.Id, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(user.Id);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_InactiveUser_ReturnsNull()
+    {
+        await using ApplicationDbContext context = CreateContext();
+        User user = new("Felipe", "felipe@email.com", "hash", UserRole.Client);
+        user.Deactivate();
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        UserRepository repository = new(context);
+        User? result = await repository.GetByIdAsync(user.Id, CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_NotFound_ReturnsNull()
+    {
+        await using ApplicationDbContext context = CreateContext();
+
+        UserRepository repository = new(context);
+        User? result = await repository.GetByIdAsync(Guid.NewGuid(), CancellationToken.None);
+
+        result.Should().BeNull();
+    }
+
+    // ── GetAllAsync ────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetAllAsync_ReturnsOnlyActiveUsers()
+    {
+        await using ApplicationDbContext context = CreateContext();
+        User active = new("Gabi", "gabi@email.com", "hash", UserRole.Client);
+        User inactive = new("Hugo", "hugo@email.com", "hash", UserRole.Client);
+        inactive.Deactivate();
+        context.Users.AddRange(active, inactive);
+        await context.SaveChangesAsync();
+
+        UserRepository repository = new(context);
+        IReadOnlyList<User> result = await repository.GetAllAsync(null, CancellationToken.None);
+
+        result.Should().ContainSingle(u => u.Id == active.Id);
+        result.Should().NotContain(u => u.Id == inactive.Id);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithRoleFilter_ReturnsOnlyMatchingRole()
+    {
+        await using ApplicationDbContext context = CreateContext();
+        User client = new("Ines", "ines@email.com", "hash", UserRole.Client);
+        User attendant = new("Jorge", "jorge@email.com", "hash", UserRole.Attendant);
+        context.Users.AddRange(client, attendant);
+        await context.SaveChangesAsync();
+
+        UserRepository repository = new(context);
+        IReadOnlyList<User> result = await repository.GetAllAsync(UserRole.Client, CancellationToken.None);
+
+        result.Should().ContainSingle(u => u.Id == client.Id);
+        result.Should().NotContain(u => u.Id == attendant.Id);
+    }
+
+    // ── AddAsync + SaveChangesAsync ────────────────────────────────────────
+
+    [Fact]
+    public async Task AddAsync_AndSaveChangesAsync_PersistsUser()
+    {
+        await using ApplicationDbContext context = CreateContext();
+        User user = new("Karen", "karen@email.com", "hash", UserRole.Administrator);
+
+        UserRepository repository = new(context);
+        await repository.AddAsync(user, CancellationToken.None);
+        await repository.SaveChangesAsync(CancellationToken.None);
+
+        User? persisted = await context.Users.FindAsync(user.Id);
+        persisted.Should().NotBeNull();
+        persisted!.Email.Should().Be("karen@email.com");
     }
 }

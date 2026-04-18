@@ -242,7 +242,7 @@ AgendeX.Domain/
 ├── Enums/
 │   └── UserRole.cs
 └── Interfaces/
-  └── IUserRepository.cs, IRefreshTokenRepository.cs
+    └── IUserRepository.cs, IClientDetailRepository.cs, IRefreshTokenRepository.cs
 
 AgendeX.Application/
 ├── Common/
@@ -251,16 +251,13 @@ AgendeX.Application/
 │   └── Interfaces/
 │       └── IPasswordHasher.cs, ITokenService.cs
 ├── Features/
-│   └── Auth/
-│       ├── Common/
-│       │   └── AuthResponseDto.cs
-│       └── Commands/
-│           ├── Login/
-│           │   └── LoginCommand.cs               # Command + Handler + Validator
-│           ├── RefreshToken/
-│           │   └── RefreshTokenCommand.cs        # Command + Handler + Validator
-│           └── Logout/
-│               └── LogoutCommand.cs              # Command + Handler + Validator
+│   ├── Auth/
+│   │   ├── AuthDto.cs          # AuthResponseDto
+│   │   └── AuthCommands.cs     # Login + Refresh + Logout (Command + Handler + Validator each)
+│   └── Users/
+│       ├── UserDto.cs          # UserDto + ClientDetailDto + UserMapper
+│       ├── UserQueries.cs      # GetUsers + GetUserById (Query + Handler each)
+│       └── UserCommands.cs     # CreateUser + UpdateUser + DeleteUser (Command + Handler + Validator each)
 └── DependencyInjection.cs
 
 AgendeX.Infrastructure/
@@ -271,7 +268,7 @@ AgendeX.Infrastructure/
 │   ├── Migrations/
 │   │   └── 20260417235513_InitialCreate.cs, ApplicationDbContextModelSnapshot.cs
 │   └── Repositories/
-│       └── UserRepository.cs, RefreshTokenRepository.cs, ...
+│       └── UserRepository.cs, ClientDetailRepository.cs, RefreshTokenRepository.cs
 ├── Services/
 │   └── TokenService.cs, PasswordHasher.cs
 ├── Identity/
@@ -280,10 +277,8 @@ AgendeX.Infrastructure/
 
 AgendeX.WebAPI/
 ├── Controllers/
-│   └── AuthController.cs
-├── Models/
-│   └── Auth/
-│       └── LoginRequest.cs, RefreshRequest.cs, LogoutRequest.cs
+│   └── AuthController.cs      # includes LoginRequest, RefreshRequest, LogoutRequest records
+│   └── UsersController.cs     # includes CreateUserRequest, UpdateUserRequest records
 ├── Middlewares/
 │   └── SecurityHeadersMiddleware.cs
 └── Program.cs
@@ -293,8 +288,10 @@ AgendeX.Tests/
 │   └── Auth/
 │       └── AuthFlowTests.cs, LoginCommandHandlerTests.cs, RefreshTokenCommandHandlerTests.cs, LogoutCommandHandlerTests.cs, AuthValidatorsTests.cs
 └── Infrastructure/
-  └── Auth/
-    └── TokenServiceTests.cs, PasswordHasherTests.cs
+    ├── Auth/
+    │   └── TokenServiceTests.cs, PasswordHasherTests.cs, RsaKeyProviderTests.cs
+    └── Persistence/
+        └── UserRepositoryTests.cs, RefreshTokenRepositoryTests.cs, EntityConfigurationTests.cs
 ```
 
 ### Dependency Rule
@@ -308,10 +305,9 @@ Never invert dependency direction. Domain must never import from other layers.
 
 ### Backend
 - One MediatR handler per use case (never put business logic in controllers)
-- Thin controllers: receive request → dispatch command/query → return result
-- Validation with FluentValidation in each use case (prefer same file as the command for fast delivery)
-- Prefer one file per use case in Application, e.g. `*Command.cs` containing Command + Handler + Validator
-- Organize Application by `Features/<Module>/Commands|Queries/<UseCase>/` and shared contracts/utilities in `Common/`
+- Thin controllers: receive request → dispatch command/query → return result; request models as `record` inside the controller file
+- Validation with FluentValidation in each use case, same file as the command
+- Organize Application by `Features/<Module>/`: `*Dto.cs` (DTOs + mapper), `*Queries.cs` (all queries + handlers), `*Commands.cs` (all commands + handlers + validators)
 - Repositories via Domain interfaces, implemented in Infrastructure
 - Do not use `var` when the type is not obvious
 - Methods with a maximum of 20 lines — extract when needed

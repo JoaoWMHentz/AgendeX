@@ -4,161 +4,95 @@ using AgendeX.Domain.Entities;
 using AgendeX.Domain.Enums;
 using AgendeX.Domain.Interfaces;
 using FluentAssertions;
+using Moq;
 
 namespace AgendeX.Tests.Application.Auth;
 
 public sealed class AuthFlowTests
 {
-    [Fact]
-    public async Task FullAuthFlow_CreateUser_Login_Refresh_Logout_WorksAsExpected()
+    private readonly User _user = new("Joao", "joao@email.com", "hashed-password", UserRole.Client);
+
+    private readonly Mock<IUserRepository> _userRepo = new();
+    private readonly Mock<IRefreshTokenRepository> _refreshTokenRepo = new();
+    private readonly Mock<IPasswordHasher> _passwordHasher = new();
+    private readonly Mock<ITokenService> _tokenService = new();
+
+    private readonly List<RefreshToken> _storedTokens = [];
+
+    public AuthFlowTests()
     {
-        FakeUserRepository userRepository = new();
-        FakeRefreshTokenRepository refreshTokenRepository = new(userRepository);
-        FakePasswordHasher passwordHasher = new();
-        FakeTokenService tokenService = new();
+        _userRepo
+            .Setup(r => r.GetByEmailAsync("joao@email.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_user);
 
-        User user = new("Joao", "joao@email.com", passwordHasher.Hash("123456"), UserRole.Client);
-        userRepository.Add(user);
+        _passwordHasher
+            .Setup(h => h.Verify("123456", "hashed-password"))
+            .Returns(true);
 
-        LoginCommandHandler loginHandler = new(userRepository, refreshTokenRepository, passwordHasher, tokenService);
-        RefreshTokenCommandHandler refreshHandler = new(refreshTokenRepository, tokenService);
-        LogoutCommandHandler logoutHandler = new(refreshTokenRepository, tokenService);
+        _tokenService
+            .SetupSequence(s => s.GenerateRefreshToken())
+            .Returns("plain-token-1")
+            .Returns("plain-token-2");
 
-        var loginResponse = await loginHandler.Handle(new LoginCommand("joao@email.com", "123456"), CancellationToken.None);
+        _tokenService.Setup(s => s.ComputeSha256Hash("plain-token-1")).Returns("hash-1");
+        _tokenService.Setup(s => s.ComputeSha256Hash("plain-token-2")).Returns("hash-2");
+        _tokenService.Setup(s => s.GenerateAccessToken(_user)).Returns("access-token");
+        _tokenService.Setup(s => s.GetAccessTokenExpiryUtc()).Returns(DateTime.UtcNow.AddMinutes(15));
+        _tokenService.Setup(s => s.GetRefreshTokenExpiryUtc()).Returns(DateTime.UtcNow.AddDays(7));
 
-        loginResponse.AccessToken.Should().StartWith("access-");
-        loginResponse.RefreshToken.Should().Be("refresh-1");
-
-        RefreshToken loginToken = refreshTokenRepository.FindByPlainToken(loginResponse.RefreshToken)!;
-        loginToken.IsRevoked.Should().BeFalse();
-
-        var refreshResponse = await refreshHandler.Handle(new RefreshTokenCommand(loginResponse.RefreshToken), CancellationToken.None);
-
-        refreshResponse.AccessToken.Should().StartWith("access-");
-        refreshResponse.RefreshToken.Should().Be("refresh-2");
-
-        loginToken.IsRevoked.Should().BeTrue();
-
-        RefreshToken rotatedToken = refreshTokenRepository.FindByPlainToken(refreshResponse.RefreshToken)!;
-        rotatedToken.IsRevoked.Should().BeFalse();
-
-        await logoutHandler.Handle(new LogoutCommand(refreshResponse.RefreshToken), CancellationToken.None);
-
-        rotatedToken.IsRevoked.Should().BeTrue();
-    }
-
-    private sealed class FakeUserRepository : IUserRepository
-    {
-        private readonly Dictionary<string, User> _usersByEmail = new(StringComparer.OrdinalIgnoreCase);
-
-        public void Add(User user) => _usersByEmail[user.Email] = user;
-
-        public User? FindById(Guid userId) => _usersByEmail.Values.FirstOrDefault(u => u.Id == userId);
-
-        public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken)
-        {
-            _usersByEmail.TryGetValue(email, out User? user);
-            return Task.FromResult(user);
-        }
-
-        public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-            => Task.FromResult(_usersByEmail.Values.FirstOrDefault(u => u.Id == id));
-
-        public Task<IReadOnlyList<User>> GetAllAsync(UserRole? role, CancellationToken cancellationToken)
-            => Task.FromResult<IReadOnlyList<User>>(_usersByEmail.Values.ToList());
-
-        public Task AddAsync(User user, CancellationToken cancellationToken)
-        {
-            _usersByEmail[user.Email] = user;
-            return Task.CompletedTask;
-        }
-
-        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-    }
-
-    private sealed class FakeRefreshTokenRepository : IRefreshTokenRepository
-    {
-        private readonly FakeUserRepository _userRepository;
-        private readonly List<RefreshToken> _refreshTokens = [];
-
-        public FakeRefreshTokenRepository(FakeUserRepository userRepository)
-        {
-            _userRepository = userRepository;
-        }
-
-        public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken)
-        {
-            RefreshToken? token = _refreshTokens.FirstOrDefault(refreshToken => refreshToken.TokenHash == tokenHash);
-
-            if (token is not null)
+        _refreshTokenRepo
+            .Setup(r => r.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()))
+            .Callback<RefreshToken, CancellationToken>((token, _) =>
             {
-                token.User = _userRepository.FindById(token.UserId)!;
-            }
+                token.User = _user;
+                _storedTokens.Add(token);
+            })
+            .Returns(Task.CompletedTask);
 
-            return Task.FromResult(token);
-        }
-
-        public Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
-        {
-            _refreshTokens.Add(refreshToken);
-            return Task.CompletedTask;
-        }
-
-        public Task SaveChangesAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public RefreshToken? FindByPlainToken(string plainToken)
-        {
-            string hash = $"sha-{plainToken}";
-            return _refreshTokens.FirstOrDefault(token => token.TokenHash == hash);
-        }
+        _refreshTokenRepo
+            .Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string hash, CancellationToken _) => _storedTokens.FirstOrDefault(t => t.TokenHash == hash));
     }
 
-    private sealed class FakePasswordHasher : IPasswordHasher
+    [Fact]
+    public async Task FullAuthFlow_Login_ReturnsValidTokens()
     {
-        public string Hash(string password)
-        {
-            return $"hash::{password}";
-        }
+        LoginCommandHandler handler = new(_userRepo.Object, _refreshTokenRepo.Object, _passwordHasher.Object, _tokenService.Object);
 
-        public bool Verify(string password, string passwordHash)
-        {
-            return passwordHash == Hash(password);
-        }
+        AuthResponseDto result = await handler.Handle(new LoginCommand("joao@email.com", "123456"), CancellationToken.None);
+
+        result.AccessToken.Should().Be("access-token");
+        result.RefreshToken.Should().Be("plain-token-1");
+        _storedTokens.Should().ContainSingle(t => t.TokenHash == "hash-1" && !t.IsRevoked);
     }
 
-    private sealed class FakeTokenService : ITokenService
+    [Fact]
+    public async Task FullAuthFlow_Refresh_RotatesTokenAndRevokesOld()
     {
-        private int _accessCounter;
-        private int _refreshCounter;
+        LoginCommandHandler loginHandler = new(_userRepo.Object, _refreshTokenRepo.Object, _passwordHasher.Object, _tokenService.Object);
+        RefreshTokenCommandHandler refreshHandler = new(_refreshTokenRepo.Object, _tokenService.Object);
 
-        public string GenerateAccessToken(User user)
-        {
-            _accessCounter++;
-            return $"access-{user.Id:N}-{_accessCounter}";
-        }
+        await loginHandler.Handle(new LoginCommand("joao@email.com", "123456"), CancellationToken.None);
 
-        public string GenerateRefreshToken()
-        {
-            _refreshCounter++;
-            return $"refresh-{_refreshCounter}";
-        }
+        AuthResponseDto result = await refreshHandler.Handle(new RefreshTokenCommand("plain-token-1"), CancellationToken.None);
 
-        public string ComputeSha256Hash(string value)
-        {
-            return $"sha-{value}";
-        }
+        result.RefreshToken.Should().Be("plain-token-2");
+        _storedTokens.First(t => t.TokenHash == "hash-1").IsRevoked.Should().BeTrue();
+        _storedTokens.First(t => t.TokenHash == "hash-2").IsRevoked.Should().BeFalse();
+    }
 
-        public DateTime GetAccessTokenExpiryUtc()
-        {
-            return DateTime.UtcNow.AddMinutes(15);
-        }
+    [Fact]
+    public async Task FullAuthFlow_Logout_RevokesActiveToken()
+    {
+        LoginCommandHandler loginHandler = new(_userRepo.Object, _refreshTokenRepo.Object, _passwordHasher.Object, _tokenService.Object);
+        RefreshTokenCommandHandler refreshHandler = new(_refreshTokenRepo.Object, _tokenService.Object);
+        LogoutCommandHandler logoutHandler = new(_refreshTokenRepo.Object, _tokenService.Object);
 
-        public DateTime GetRefreshTokenExpiryUtc()
-        {
-            return DateTime.UtcNow.AddDays(7);
-        }
+        await loginHandler.Handle(new LoginCommand("joao@email.com", "123456"), CancellationToken.None);
+        AuthResponseDto refreshResult = await refreshHandler.Handle(new RefreshTokenCommand("plain-token-1"), CancellationToken.None);
+
+        await logoutHandler.Handle(new LogoutCommand(refreshResult.RefreshToken), CancellationToken.None);
+
+        _storedTokens.Should().OnlyContain(t => t.IsRevoked);
     }
 }

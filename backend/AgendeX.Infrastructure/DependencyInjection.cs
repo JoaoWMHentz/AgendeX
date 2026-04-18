@@ -1,4 +1,8 @@
+using AgendeX.Application.Common.Interfaces;
+using AgendeX.Domain.Interfaces;
+using AgendeX.Infrastructure.Auth;
 using AgendeX.Infrastructure.Data;
+using AgendeX.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +18,14 @@ public static class DependencyInjection
 
         services.AddDbContext<AgendeXDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddSingleton<RsaKeyProvider>();
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }

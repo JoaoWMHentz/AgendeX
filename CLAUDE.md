@@ -38,7 +38,7 @@ prova-dotnet-react-senior-01064-2026/
 │   ├── AgendeX.sln
 │   ├── src/
 │   │   ├── AgendeX.Domain/          # Entities, enums, interfaces
-│   │   ├── AgendeX.Application/     # Use cases, DTOs, handlers, validators
+│   │   ├── AgendeX.Application/     # Features (Commands/Queries) + Common (Behaviors/Interfaces)
 │   │   ├── AgendeX.Infrastructure/  # EF Core, repositories, migrations, JWT
 │   │   └── AgendeX.WebAPI/          # Controllers, Swagger, middlewares, Program.cs
 │   └── tests/
@@ -217,9 +217,9 @@ Confirmed
 
 ### Application Layer
 - Contains application logic (use cases)
-- DTOs, service interfaces, MediatR handlers, validators
+- Features with Commands/Queries, DTOs, service interfaces, MediatR handlers, validators
 - **Depends only on Domain**
-- Structure: `AgendeX.Application/DTOs/`, `AgendeX.Application/Interfaces/`, `AgendeX.Application/UseCases/`
+- Structure: `AgendeX.Application/Features/`, `AgendeX.Application/Common/`
 
 ### Infrastructure Layer
 - Implements interfaces defined in Domain/Application
@@ -242,17 +242,33 @@ AgendeX.Domain/
     └── IAppointmentRepository.cs, IUserRepository.cs, ...
 
 AgendeX.Application/
-├── DTOs/
-│   └── AppointmentDto.cs, ...
-├── Interfaces/
-│   └── IAppointmentService.cs, ...
-└── UseCases/
-    └── Appointments/
-        ├── CreateAppointment/
-        │   ├── CreateAppointmentCommand.cs
-        │   ├── CreateAppointmentHandler.cs
-        │   └── CreateAppointmentValidator.cs
-        └── ...
+├── Features/
+│   ├── Appointments/
+│   │   ├── Commands/
+│   │   │   └── CreateAppointment/
+│   │   │       └── CreateAppointmentCommand.cs   # Command + Handler + Validator (single file)
+│   │   └── Queries/
+│   │       └── GetAppointmentById/
+│   │           └── GetAppointmentByIdQuery.cs    # Query + Handler + DTO (single file when possible)
+│   ├── Auth/
+│   │   ├── Common/
+│   │   │   └── AuthResponseDto.cs
+│   │   └── Commands/
+│   │       ├── Login/
+│   │       │   └── LoginCommand.cs               # Command + Handler + Validator
+│   │       ├── RefreshToken/
+│   │       │   └── RefreshTokenCommand.cs        # Command + Handler + Validator
+│   │       └── Logout/
+│   │           └── LogoutCommand.cs              # Command + Handler + Validator
+│   └── Users/
+│       └── ...
+├── Common/
+│   ├── Behaviors/
+│   │   ├── ValidationBehavior.cs
+│   │   └── LoggingBehavior.cs
+│   └── Interfaces/
+│       └── IApplicationDbContext.cs
+└── DependencyInjection.cs
 
 AgendeX.Infrastructure/
 ├── Data/
@@ -284,7 +300,9 @@ Never invert dependency direction. Domain must never import from other layers.
 ### Backend
 - One MediatR handler per use case (never put business logic in controllers)
 - Thin controllers: receive request → dispatch command/query → return result
-- Validation with FluentValidation in separate classes (`*Validator.cs`)
+- Validation with FluentValidation in each use case (prefer same file as the command for fast delivery)
+- Prefer one file per use case in Application, e.g. `*Command.cs` containing Command + Handler + Validator
+- Organize Application by `Features/<Module>/Commands|Queries/<UseCase>/` and shared contracts/utilities in `Common/`
 - Repositories via Domain interfaces, implemented in Infrastructure
 - Do not use `var` when the type is not obvious
 - Methods with a maximum of 20 lines — extract when needed

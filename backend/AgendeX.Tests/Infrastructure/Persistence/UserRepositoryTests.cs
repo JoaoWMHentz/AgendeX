@@ -50,7 +50,7 @@ public sealed class UserRepositoryTests
     public async Task GetByEmailAsync_DifferentCase_ReturnsUser()
     {
         await using ApplicationDbContext context = CreateContext();
-        User user = new("Carlos", "carlos@email.com", "hash", UserRole.Attendant);
+        User user = new("Carlos", "carlos@email.com", "hash", UserRole.Agent);
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
@@ -143,7 +143,7 @@ public sealed class UserRepositoryTests
     {
         await using ApplicationDbContext context = CreateContext();
         User client = new("Ines", "ines@email.com", "hash", UserRole.Client);
-        User attendant = new("Jorge", "jorge@email.com", "hash", UserRole.Attendant);
+        User attendant = new("Jorge", "jorge@email.com", "hash", UserRole.Agent);
         context.Users.AddRange(client, attendant);
         await context.SaveChangesAsync();
 

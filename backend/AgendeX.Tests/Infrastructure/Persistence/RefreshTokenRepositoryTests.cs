@@ -48,7 +48,7 @@ public sealed class RefreshTokenRepositoryTests
     public async Task GetByTokenHashAsync_TokenExists_ReturnsTokenWithUser()
     {
         await using ApplicationDbContext context = CreateContext();
-        User user = new("Gustavo", "gustavo@email.com", "hash", UserRole.Attendant);
+        User user = new("Gustavo", "gustavo@email.com", "hash", UserRole.Agent);
         context.Users.Add(user);
 
         RefreshToken token = new()

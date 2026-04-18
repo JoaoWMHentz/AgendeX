@@ -26,7 +26,7 @@ public sealed class TokenServiceTests
         using RsaKeyProvider rsaKeyProvider = new();
         TokenService tokenService = new(Options.Create(jwtOptions), rsaKeyProvider);
 
-        User user = new("Bruna", "bruna@email.com", "hash", UserRole.Attendant);
+        User user = new("Bruna", "bruna@email.com", "hash", UserRole.Agent);
 
         string accessToken = tokenService.GenerateAccessToken(user);
 

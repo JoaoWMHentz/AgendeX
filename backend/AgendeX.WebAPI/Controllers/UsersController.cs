@@ -12,10 +12,12 @@ namespace AgendeX.WebAPI.Controllers;
 public sealed class UsersController : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(ISender sender)
+    public UsersController(ISender sender, ILogger<UsersController> logger)
     {
         _sender = sender;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -23,6 +25,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<UserDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] UserRole? role, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("GetAll users requested with role filter {Role}", role?.ToString() ?? "none");
         IReadOnlyList<UserDto> users = await _sender.Send(new GetUsersQuery(role), cancellationToken);
         return Ok(users);
     }
@@ -32,6 +35,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("GetById user requested for id {Id}", id);
         UserDto user = await _sender.Send(new GetUserByIdQuery(id), cancellationToken);
         return Ok(user);
     }
@@ -43,6 +47,7 @@ public sealed class UsersController : ControllerBase
     public async Task<IActionResult> Create(
         [FromBody] CreateUserCommand command, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Create user requested for email {Email} with role {Role}", command.Email, command.Role);
         UserDto user = await _sender.Send(command, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
     }
@@ -54,6 +59,7 @@ public sealed class UsersController : ControllerBase
     public async Task<IActionResult> Update(
         Guid id, [FromBody] string name, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Update user requested for id {Id} with name {Name}", id, name);
         UserDto user = await _sender.Send(new UpdateUserCommand(id, name), cancellationToken);
         return Ok(user);
     }
@@ -66,6 +72,7 @@ public sealed class UsersController : ControllerBase
     public async Task<IActionResult> SetClientDetail(
         Guid id, [FromBody] SetClientDetailRequest body, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("SetClientDetail requested for user {Id}", id);
         UserDto user = await _sender.Send(
             new SetClientDetailCommand(id, body.CPF, body.BirthDate, body.Phone, body.Notes),
             cancellationToken);
@@ -79,6 +86,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Delete user requested for id {Id}", id);
         await _sender.Send(new DeleteUserCommand(id), cancellationToken);
         return NoContent();
     }

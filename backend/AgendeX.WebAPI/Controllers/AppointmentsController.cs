@@ -21,16 +21,6 @@ public sealed class AppointmentsController : ControllerBase
         _currentUser = currentUser;
     }
 
-    // ClientId vem do token — só os campos do body
-    public sealed record CreateAppointmentBody(
-        string Title, string? Description, int ServiceTypeId,
-        Guid AgentId, DateOnly Date, TimeOnly Time, string? Notes);
-
-    // Id vem da rota — só o campo do body
-    public sealed record RejectBody(string RejectionReason);
-    public sealed record CompleteBody(string? ServiceSummary);
-    public sealed record ReassignBody(Guid NewAgentId);
-
     private Guid CurrentUserId => _currentUser.UserId;
     private bool IsAdmin => _currentUser.Role == UserRole.Administrator;
     private bool IsAgent => _currentUser.Role == UserRole.Agent;
@@ -67,7 +57,7 @@ public sealed class AppointmentsController : ControllerBase
     [ProducesResponseType(typeof(AppointmentDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
-        [FromBody] CreateAppointmentBody body, CancellationToken cancellationToken)
+        [FromBody] CreateAppointmentRequest body, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(new CreateAppointmentCommand(
             body.Title, body.Description, body.ServiceTypeId,
@@ -95,10 +85,10 @@ public sealed class AppointmentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Reject(
-        Guid id, [FromBody] RejectBody body, CancellationToken cancellationToken)
+        Guid id, [FromBody] string rejectionReason, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new RejectAppointmentCommand(id, CurrentUserId, body.RejectionReason), cancellationToken);
+            new RejectAppointmentCommand(id, CurrentUserId, rejectionReason), cancellationToken);
         return Ok(appointment);
     }
 
@@ -120,10 +110,10 @@ public sealed class AppointmentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Complete(
-        Guid id, [FromBody] CompleteBody body, CancellationToken cancellationToken)
+        Guid id, [FromBody] string? serviceSummary, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new CompleteAppointmentCommand(id, CurrentUserId, body.ServiceSummary), cancellationToken);
+            new CompleteAppointmentCommand(id, CurrentUserId, serviceSummary), cancellationToken);
         return Ok(appointment);
     }
 
@@ -133,10 +123,10 @@ public sealed class AppointmentsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Reassign(
-        Guid id, [FromBody] ReassignBody body, CancellationToken cancellationToken)
+        Guid id, [FromBody] Guid newAgentId, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new ReassignAppointmentCommand(id, body.NewAgentId), cancellationToken);
+            new ReassignAppointmentCommand(id, newAgentId), cancellationToken);
         return Ok(appointment);
     }
 }

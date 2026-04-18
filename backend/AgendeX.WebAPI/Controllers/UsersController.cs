@@ -18,13 +18,6 @@ public sealed class UsersController : ControllerBase
         _sender = sender;
     }
 
-    // Id vem da rota — só o campo do body
-    public sealed record UpdateUserBody(string Name);
-
-    // UserId vem da rota — só os campos do body
-    public sealed record SetClientDetailBody(
-        string CPF, DateOnly BirthDate, string Phone, string? Notes);
-
     [HttpGet]
     [Authorize(Roles = Roles.Administrator)]
     [ProducesResponseType(typeof(IReadOnlyList<UserDto>), StatusCodes.Status200OK)]
@@ -59,9 +52,9 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
-        Guid id, [FromBody] UpdateUserBody body, CancellationToken cancellationToken)
+        Guid id, [FromBody] string name, CancellationToken cancellationToken)
     {
-        UserDto user = await _sender.Send(new UpdateUserCommand(id, body.Name), cancellationToken);
+        UserDto user = await _sender.Send(new UpdateUserCommand(id, name), cancellationToken);
         return Ok(user);
     }
 
@@ -71,7 +64,7 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SetClientDetail(
-        Guid id, [FromBody] SetClientDetailBody body, CancellationToken cancellationToken)
+        Guid id, [FromBody] SetClientDetailRequest body, CancellationToken cancellationToken)
     {
         UserDto user = await _sender.Send(
             new SetClientDetailCommand(id, body.CPF, body.BirthDate, body.Phone, body.Notes),

@@ -18,9 +18,6 @@ public sealed class AvailabilityController : ControllerBase
         _sender = sender;
     }
 
-    // Id vem da rota — só os campos do body
-    public sealed record UpdateAvailabilityBody(TimeOnly StartTime, TimeOnly EndTime);
-
     [HttpGet("agent/{agentId:guid}")]
     [ProducesResponseType(typeof(IReadOnlyList<AvailabilityDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByAgent(Guid agentId, CancellationToken cancellationToken)
@@ -57,7 +54,7 @@ public sealed class AvailabilityController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
-        Guid id, [FromBody] UpdateAvailabilityBody body, CancellationToken cancellationToken)
+        Guid id, [FromBody] UpdateAvailabilityRequest body, CancellationToken cancellationToken)
     {
         AvailabilityDto result = await _sender.Send(
             new UpdateAvailabilityCommand(id, body.StartTime, body.EndTime), cancellationToken);

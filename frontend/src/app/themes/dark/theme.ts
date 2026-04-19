@@ -120,6 +120,12 @@ export const darkTheme: ThemeConfig = {
       rowHoverBg: '#131d29',
       headerSplitColor: 'rgba(168, 191, 221, 0.32)',
       footerBg: '#0f1721',
+      cellPaddingBlock: 10,
+      cellPaddingInline: 14,
+      cellPaddingBlockMD: 8,
+      cellPaddingInlineMD: 12,
+      cellPaddingBlockSM: 6,
+      cellPaddingInlineSM: 10,
     },
   },
 }

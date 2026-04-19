@@ -9,6 +9,7 @@ import {
   ProfileOutlined,
   PlusCircleOutlined,
   UnorderedListOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/authStore'
@@ -38,6 +39,12 @@ const menuConfig: MenuItem[] = [
     key: '/availability',
     icon: <ClockCircleOutlined />,
     label: 'Disponibilidade',
+    allowedRoles: [Roles.Administrator, Roles.Agent],
+  },
+  {
+    key: '/reports',
+    icon: <BarChartOutlined />,
+    label: 'Relatórios',
     allowedRoles: [Roles.Administrator, Roles.Agent],
   },
   {

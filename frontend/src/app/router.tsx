@@ -11,6 +11,7 @@ import { AvailabilityPage } from '@/features/availability/pages/AvailabilityPage
 import { UsersPage } from '@/features/users/pages/UsersPage'
 import { ProfilePage } from '@/features/users/pages/ProfilePage'
 import { ServiceTypesPage } from '@/features/service-types/ServiceTypesPage'
+import { ReportsPage } from '@/features/reports/pages/ReportsPage'
 import { Roles } from '@/shared/constants/roles'
 import { useAuthStore } from '@/features/auth/authStore'
 
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={[Roles.Administrator, Roles.Agent]} />,
             children: [
               { path: 'availability', element: <AvailabilityPage /> },
+              { path: 'reports', element: <ReportsPage /> },
             ],
           },
 

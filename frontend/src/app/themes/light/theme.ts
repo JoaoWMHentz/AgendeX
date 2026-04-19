@@ -116,6 +116,12 @@ export const lightTheme: ThemeConfig = {
       rowHoverBg: '#f7fafc',
       headerSplitColor: '#bcc8d5',
       footerBg: '#f8fbfd',
+      cellPaddingBlock: 10,
+      cellPaddingInline: 14,
+      cellPaddingBlockMD: 8,
+      cellPaddingInlineMD: 12,
+      cellPaddingBlockSM: 6,
+      cellPaddingInlineSM: 10,
     },
   },
 }

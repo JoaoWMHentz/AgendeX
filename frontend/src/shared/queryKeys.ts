@@ -16,4 +16,7 @@ export const queryKeys = {
     all: (filters: object) => ['appointments', filters] as const,
     byId: (id: string) => ['appointments', id] as const,
   },
+  reports: {
+    all: (filters: object) => ['reports', filters] as const,
+  },
 }

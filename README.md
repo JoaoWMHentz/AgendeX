@@ -73,7 +73,9 @@ O frontend está organizado em módulos de domínio funcional, com a seguinte l�
 ```mermaid
 flowchart LR
 	U[Usuário] --> B[Browser / React App]
-	B -->|HTTP + JWT| API[ASP.NET Core Web API]
+	B --> F[Frontend]
+	F --> S[services]
+	S -->|HTTP + JWT| API[ASP.NET Core Web API]
 
 	subgraph Frontend
 		FE_APP[app]
@@ -93,20 +95,22 @@ flowchart LR
 		PG[(PostgreSQL 16)]
 	end
 
-	B --> FE_APP
+	F --> FE_APP
 	FE_APP --> FE_FEATURES
 	FE_APP --> FE_SHARED
 	FE_FEATURES --> FE_SERVICES
-	FE_SERVICES --> API
+	FE_SERVICES --> S
 
 	API --> WEB
 	WEB --> APP
 	APP --> DOM
-	INF --> DOM
-	INF --> APP
 	WEB --> INF
+	APP --> INF
+	INF --> DOM
 	INF --> PG
 ```
+
+Esse diagrama separa o caminho de execução do request do desenho das dependências internas: o frontend concentra a navegação e orquestração, enquanto `services` é a borda HTTP; no backend, `WebAPI` recebe a requisição e `Application` concentra os casos de uso, com `Infrastructure` fornecendo persistência e integrações.
 
 ### Diagrama de Sequência: Login
 

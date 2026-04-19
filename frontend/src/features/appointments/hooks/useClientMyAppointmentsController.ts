@@ -3,14 +3,22 @@ import { message, Modal } from 'antd'
 import { useServiceTypes } from '@/features/service-types/useServiceTypes'
 import { extractApiError } from '@/shared/utils/apiError'
 import { useAppointments, useCancelAppointment } from '../useAppointments'
-import { appointmentStatusLabel, type AppointmentFilters, type AppointmentStatusValue } from '../types'
+import {
+  appointmentStatusLabel,
+  type Appointment,
+  type AppointmentFilters,
+} from '../types'
 
 export function useClientMyAppointmentsController() {
   const [filters, setFilters] = useState<AppointmentFilters>({})
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
 
   const { data: appointments = [], isLoading } = useAppointments(filters)
   const { data: serviceTypes = [] } = useServiceTypes()
   const cancelAppointment = useCancelAppointment()
+
+  const openDetail = (appointment: Appointment) => setSelectedAppointment(appointment)
+  const closeDetail = () => setSelectedAppointment(null)
 
   const handleCancel = (id: string) => {
     Modal.confirm({
@@ -20,6 +28,7 @@ export function useClientMyAppointmentsController() {
         try {
           await cancelAppointment.mutateAsync(id)
           message.success('Agendamento cancelado')
+          closeDetail()
         } catch (err) {
           message.error(extractApiError(err))
         }
@@ -32,6 +41,9 @@ export function useClientMyAppointmentsController() {
     isLoading,
     filters,
     setFilters,
+    selectedAppointment,
+    openDetail,
+    closeDetail,
     statusOptions: Object.entries(appointmentStatusLabel).map(([value, label]) => ({
       value: Number(value),
       label,

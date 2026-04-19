@@ -6,26 +6,59 @@ import {
   AppstoreOutlined,
   UserOutlined,
   LogoutOutlined,
+  ProfileOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/authStore'
 import { authService } from '@/services/auth.service'
 import { tokenStorage } from '@/services/tokenStorage'
+import { Roles, type Role } from '@/shared/constants/roles'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text } = Typography
 
-const menuItems = [
-  { key: '/appointments', icon: <CalendarOutlined />, label: 'Agendamentos' },
-  { key: '/availability', icon: <ClockCircleOutlined />, label: 'Disponibilidade' },
-  { key: '/users', icon: <TeamOutlined />, label: 'Usuários' },
-  { key: '/service-types', icon: <AppstoreOutlined />, label: 'Tipos de Serviço' },
+interface MenuItem {
+  key: string
+  icon: React.ReactNode
+  label: string
+  allowedRoles: Role[]
+}
+
+const menuConfig: MenuItem[] = [
+  {
+    key: '/appointments',
+    icon: <CalendarOutlined />,
+    label: 'Agendamentos',
+    allowedRoles: [Roles.Administrator, Roles.Agent, Roles.Client],
+  },
+  {
+    key: '/availability',
+    icon: <ClockCircleOutlined />,
+    label: 'Disponibilidade',
+    allowedRoles: [Roles.Administrator, Roles.Agent, Roles.Client],
+  },
+  {
+    key: '/users',
+    icon: <TeamOutlined />,
+    label: 'Usuários',
+    allowedRoles: [Roles.Administrator],
+  },
+  {
+    key: '/service-types',
+    icon: <AppstoreOutlined />,
+    label: 'Tipos de Serviço',
+    allowedRoles: [Roles.Administrator],
+  },
 ]
 
 export function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearSession } = useAuthStore()
+
+  const visibleMenuItems = menuConfig
+    .filter((item) => user && item.allowedRoles.includes(user.role as Role))
+    .map(({ key, icon, label }) => ({ key, icon, label }))
 
   const handleLogout = async () => {
     const refreshToken = tokenStorage.getRefresh()
@@ -41,6 +74,13 @@ export function AppLayout() {
   }
 
   const userMenuItems = [
+    {
+      key: 'profile',
+      icon: <ProfileOutlined />,
+      label: 'Meu perfil',
+      onClick: () => navigate('/profile'),
+    },
+    { type: 'divider' as const },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
@@ -60,7 +100,7 @@ export function AppLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
-          items={menuItems}
+          items={visibleMenuItems}
           onClick={({ key }) => navigate(key)}
         />
       </Sider>

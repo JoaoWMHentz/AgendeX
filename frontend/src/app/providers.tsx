@@ -1,4 +1,4 @@
-import { ConfigProvider } from 'antd'
+import { App, ConfigProvider } from 'antd'
 import ptBR from 'antd/locale/pt_BR'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
@@ -9,9 +9,11 @@ import { theme } from './theme'
 export function Providers() {
   return (
     <ConfigProvider locale={ptBR} theme={theme}>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <App>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </App>
     </ConfigProvider>
   )
 }

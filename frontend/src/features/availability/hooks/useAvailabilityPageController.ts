@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { message } from 'antd'
 import { useAgents } from '@/features/users/hooks/useUsers'
 import { useAuthStore } from '@/features/auth/authStore'
@@ -17,12 +17,19 @@ import type { EditAvailabilityFormValues } from '../components/EditAvailabilityM
 export function useAvailabilityPageController() {
   const { user: me } = useAuthStore()
   const isAdmin = me?.role === Roles.Administrator
+  const isAgent = me?.role === Roles.Agent
 
   const [selectedAgent, setSelectedAgent] = useState<string | undefined>()
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Availability | null>(null)
 
-  const { data: agents = [] } = useAgents()
+  useEffect(() => {
+    if (isAgent && me?.id) {
+      setSelectedAgent(me.id)
+    }
+  }, [isAgent, me?.id])
+
+  const { data: agents = [] } = useAgents({ enabled: isAdmin })
   const { data: availabilities = [], isLoading } = useAvailabilityByAgent(selectedAgent)
 
   const createAvailability = useCreateAvailability()
@@ -81,6 +88,7 @@ export function useAvailabilityPageController() {
 
   return {
     isAdmin,
+    isAgent,
     selectedAgent,
     setSelectedAgent,
     agentOptions: agents.map((agent) => ({ value: agent.id, label: agent.name })),

@@ -2,15 +2,25 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import { Form, Select } from 'antd'
 import { z } from 'zod'
-import { WeekDay, weekDayLabel, type WeekDayValue } from '../types'
+import { WeekDay, weekDayLabel } from '../types'
 import { TimePickerField } from '@/shared/components/TimePickerField'
 import { FormModal } from '@/shared/components/FormModal'
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
 
+const weekDaySchema = z.union([
+  z.literal(WeekDay.Sunday),
+  z.literal(WeekDay.Monday),
+  z.literal(WeekDay.Tuesday),
+  z.literal(WeekDay.Wednesday),
+  z.literal(WeekDay.Thursday),
+  z.literal(WeekDay.Friday),
+  z.literal(WeekDay.Saturday),
+])
+
 const createAvailabilitySchema = z.object({
   agentId: z.string().uuid('Selecione um agente'),
-  weekDay: z.number(),
+  weekDay: weekDaySchema,
   startTime: z.string().regex(timeRegex, 'Formato HH:mm'),
   endTime: z.string().regex(timeRegex, 'Formato HH:mm'),
 })
@@ -53,7 +63,7 @@ export function CreateAvailabilityModal({
   }
 
   const handleSubmit = form.handleSubmit(async (values) => {
-    await onSubmit({ ...values, weekDay: values.weekDay as WeekDayValue })
+    await onSubmit(values)
     form.reset()
   })
 

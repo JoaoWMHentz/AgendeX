@@ -12,6 +12,7 @@ type AgentOption = {
 
 type AvailabilityListProps = {
   isAdmin: boolean
+  isAgent: boolean
   availabilities: Availability[]
   loading: boolean
   selectedAgent?: string
@@ -24,6 +25,7 @@ type AvailabilityListProps = {
 
 export function AvailabilityList({
   isAdmin,
+  isAgent,
   availabilities,
   loading,
   selectedAgent,
@@ -87,23 +89,31 @@ export function AvailabilityList({
         )}
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <Select
-          placeholder="Selecione um agente"
-          style={{ width: 240 }}
-          options={agentOptions}
-          value={selectedAgent}
-          onChange={onAgentChange}
-          allowClear
-        />
-      </div>
+      {isAdmin && (
+        <div style={{ marginBottom: 16 }}>
+          <Select
+            placeholder="Selecione um agente"
+            style={{ width: 240 }}
+            options={agentOptions}
+            value={selectedAgent}
+            onChange={onAgentChange}
+            allowClear
+          />
+        </div>
+      )}
 
       <Table<Availability>
         columns={columns}
         dataSource={availabilities}
         rowKey="id"
         loading={loading}
-        locale={{ emptyText: selectedAgent ? 'Nenhuma disponibilidade' : 'Selecione um agente' }}
+        locale={{
+          emptyText: selectedAgent
+            ? 'Nenhuma disponibilidade'
+            : isAgent
+              ? 'Nenhuma disponibilidade'
+              : 'Selecione um agente',
+        }}
       />
     </>
   )

@@ -31,9 +31,12 @@ export function useAppointmentsPageController() {
   const [completeSummary, setCompleteSummary] = useState('')
   const [reassignAgentId, setReassignAgentId] = useState<string | undefined>()
 
+  const shouldLoadServiceTypes = isAdmin || isClient
+  const shouldLoadAgents = isAdmin || (isClient && modal.type === 'create')
+
   const { data: appointments = [], isLoading } = useAppointments(filters)
-  const { data: serviceTypes = [] } = useServiceTypes()
-  const { data: agents = [] } = useAgents()
+  const { data: serviceTypes = [] } = useServiceTypes({ enabled: shouldLoadServiceTypes })
+  const { data: agents = [] } = useAgents({ enabled: shouldLoadAgents })
 
   const createAppointment = useCreateAppointment()
   const confirmAppointment = useConfirmAppointment()

@@ -4,18 +4,24 @@ import { queryKeys } from '@/shared/queryKeys'
 import { useAuthStore } from '@/features/auth/authStore'
 import type { UserRoleValue } from '../models/types'
 
-export function useUsers(role?: UserRoleValue) {
+type QueryOptions = {
+  enabled?: boolean
+}
+
+export function useUsers(role?: UserRoleValue, options?: QueryOptions) {
   return useQuery({
     queryKey: queryKeys.users.all(role),
     queryFn: () => usersService.getAll(role),
+    enabled: options?.enabled ?? true,
   })
 }
 
-export function useAgents() {
+export function useAgents(options?: QueryOptions) {
   return useQuery({
     queryKey: queryKeys.users.agents,
     queryFn: () => usersService.getAll(1), // Agent = 1
     staleTime: 1000 * 60 * 5,
+    enabled: options?.enabled ?? true,
   })
 }
 

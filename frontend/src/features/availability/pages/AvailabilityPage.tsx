@@ -6,6 +6,7 @@ import { useAvailabilityPageController } from '../hooks/useAvailabilityPageContr
 export function AvailabilityPage() {
   const {
     isAdmin,
+    isAgent,
     selectedAgent,
     setSelectedAgent,
     agentOptions,
@@ -28,6 +29,7 @@ export function AvailabilityPage() {
     <>
       <AvailabilityList
         isAdmin={isAdmin}
+        isAgent={isAgent}
         availabilities={availabilities}
         loading={isLoading}
         selectedAgent={selectedAgent}

@@ -84,7 +84,7 @@ export function AvailabilityList({
         </Title>
         {isAdmin && (
           <Button type="primary" icon={<PlusOutlined />} onClick={onOpenCreate}>
-            Novo Agendamento
+            Nova disponibilidade
           </Button>
         )}
       </div>

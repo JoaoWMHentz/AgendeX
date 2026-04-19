@@ -33,6 +33,16 @@ public sealed class UsersController : ControllerBase
         return Ok(users);
     }
 
+    [HttpGet("agents")]
+    [Authorize(Roles = $"{Roles.Client},{Roles.Administrator}")]
+    [ProducesResponseType(typeof(IReadOnlyList<AgentLookupDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAgents(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("GetAgents requested");
+        IReadOnlyList<AgentLookupDto> agents = await _sender.Send(new GetAgentsQuery(), cancellationToken);
+        return Ok(agents);
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -30,6 +30,11 @@ export interface User {
   clientDetail?: ClientDetail
 }
 
+export interface AgentLookup {
+  id: string
+  name: string
+}
+
 export interface CreateUserRequest {
   name: string
   email: string

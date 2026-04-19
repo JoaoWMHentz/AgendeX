@@ -10,7 +10,7 @@ namespace AgendeX.Tests.Application.Availability;
 public sealed class CreateAvailabilityCommandHandlerTests
 {
     [Fact]
-    public async Task Handle_ValidRequest_ReturnsAvailabilityDto()
+    public async Task Handle_ValidRequest_ReturnsAvailabilitiesDtos()
     {
         Mock<IAgentAvailabilityRepository> repository = new();
         Mock<IUserRepository> userRepository = new();
@@ -18,7 +18,7 @@ public sealed class CreateAvailabilityCommandHandlerTests
         Guid agentId = Guid.NewGuid();
         CreateAvailabilityCommand command = new(
             agentId,
-            WeekDay.Monday,
+            new[] { WeekDay.Monday, WeekDay.Wednesday },
             new TimeOnly(8, 0),
             new TimeOnly(12, 0));
 
@@ -29,14 +29,17 @@ public sealed class CreateAvailabilityCommandHandlerTests
         repository
             .Setup(r => r.GetByAgentAndWeekDayAsync(agentId, WeekDay.Monday, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Array.Empty<AgentAvailability>());
+        repository
+            .Setup(r => r.GetByAgentAndWeekDayAsync(agentId, WeekDay.Wednesday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<AgentAvailability>());
 
         CreateAvailabilityCommandHandler handler = new(repository.Object, userRepository.Object);
 
-        AvailabilityDto result = await handler.Handle(command, CancellationToken.None);
+        IReadOnlyList<AvailabilityDto> result = await handler.Handle(command, CancellationToken.None);
 
-        result.AgentId.Should().Be(agentId);
-        result.WeekDay.Should().Be(WeekDay.Monday);
-        result.IsActive.Should().BeTrue();
+        result.Should().HaveCount(2);
+        result.All(a => a.AgentId == agentId).Should().BeTrue();
+        result.All(a => a.IsActive).Should().BeTrue();
         repository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -54,11 +57,15 @@ public sealed class CreateAvailabilityCommandHandlerTests
         CreateAvailabilityCommandHandler handler = new(repository.Object, userRepository.Object);
 
         Func<Task> act = async () => await handler.Handle(
-            new CreateAvailabilityCommand(agentId, WeekDay.Tuesday, new TimeOnly(9, 0), new TimeOnly(11, 0)),
+            new CreateAvailabilityCommand(
+                agentId,
+                new[] { WeekDay.Tuesday },
+                new TimeOnly(9, 0),
+                new TimeOnly(11, 0)),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<KeyNotFoundException>()
-            .WithMessage($"Agent '{agentId}' not found.");
+            .WithMessage($"Atendente '{agentId}' nao encontrado.");
     }
 
     [Fact]
@@ -83,10 +90,14 @@ public sealed class CreateAvailabilityCommandHandlerTests
         CreateAvailabilityCommandHandler handler = new(repository.Object, userRepository.Object);
 
         Func<Task> act = async () => await handler.Handle(
-            new CreateAvailabilityCommand(agentId, WeekDay.Monday, new TimeOnly(11, 0), new TimeOnly(13, 0)),
+            new CreateAvailabilityCommand(
+                agentId,
+                new[] { WeekDay.Monday },
+                new TimeOnly(11, 0),
+                new TimeOnly(13, 0)),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Availability interval overlaps with an existing slot.");
+            .WithMessage("*Conflito de disponibilidade na segunda-feira*");
     }
 }

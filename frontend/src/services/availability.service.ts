@@ -16,7 +16,7 @@ export const availabilityService = {
       .then((r) => r.data),
 
   create: (data: CreateAvailabilityRequest) =>
-    api.post<Availability>('/api/availability', data).then((r) => r.data),
+    api.post<Availability[]>('/api/availability', data).then((r) => r.data),
 
   update: (id: string, data: UpdateAvailabilityRequest) =>
     api.put<Availability>(`/api/availability/${id}`, data).then((r) => r.data),

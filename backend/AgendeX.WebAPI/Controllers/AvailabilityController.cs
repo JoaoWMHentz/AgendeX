@@ -39,13 +39,13 @@ public sealed class AvailabilityController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = Roles.Administrator)]
-    [ProducesResponseType(typeof(AvailabilityDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(IReadOnlyList<AvailabilityDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
         [FromBody] CreateAvailabilityCommand command, CancellationToken cancellationToken)
     {
-        AvailabilityDto result = await _sender.Send(command, cancellationToken);
-        return CreatedAtAction(nameof(GetByAgent), new { agentId = result.AgentId }, result);
+        IReadOnlyList<AvailabilityDto> result = await _sender.Send(command, cancellationToken);
+        return CreatedAtAction(nameof(GetByAgent), new { agentId = command.AgentId }, result);
     }
 
     [HttpPut("{id:guid}")]

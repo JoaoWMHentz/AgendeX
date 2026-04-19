@@ -12,7 +12,7 @@ public sealed class AvailabilityValidatorsTests
         CreateAvailabilityCommandValidator validator = new();
         CreateAvailabilityCommand command = new(
             Guid.NewGuid(),
-            WeekDay.Wednesday,
+            new[] { WeekDay.Wednesday },
             new TimeOnly(11, 0),
             new TimeOnly(10, 0));
 
@@ -20,6 +20,22 @@ public sealed class AvailabilityValidatorsTests
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.ErrorMessage == "EndTime must be after StartTime.");
+    }
+
+    [Fact]
+    public void CreateAvailabilityCommandValidator_Sunday_ShouldBeInvalid()
+    {
+        CreateAvailabilityCommandValidator validator = new();
+        CreateAvailabilityCommand command = new(
+            Guid.NewGuid(),
+            new[] { WeekDay.Sunday },
+            new TimeOnly(9, 0),
+            new TimeOnly(10, 0));
+
+        FluentValidation.Results.ValidationResult result = validator.Validate(command);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage == "Only Monday to Friday is allowed.");
     }
 
     [Fact]

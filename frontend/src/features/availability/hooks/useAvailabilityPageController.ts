@@ -54,8 +54,11 @@ export function useAvailabilityPageController() {
 
   const handleCreate = async (values: CreateAvailabilityFormValues) => {
     try {
-      await createAvailability.mutateAsync(values)
-      message.success('Disponibilidade criada')
+      const created = await createAvailability.mutateAsync(values)
+      const count = created.length
+      message.success(
+        count === 1 ? '1 disponibilidade criada' : `${count} disponibilidades criadas`,
+      )
       closeCreateModal()
     } catch (err) {
       message.error(extractApiError(err))

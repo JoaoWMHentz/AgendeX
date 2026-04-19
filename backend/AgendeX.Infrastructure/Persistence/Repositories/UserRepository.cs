@@ -42,6 +42,14 @@ public sealed class UserRepository : IUserRepository
         return await query.OrderBy(user => user.Name).ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<User>> GetActiveAgentsAsync(CancellationToken cancellationToken)
+    {
+        return await _dbContext.Users
+            .Where(user => user.IsActive && user.Role == UserRole.Agent)
+            .OrderBy(user => user.Name)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(User user, CancellationToken cancellationToken)
     {
         await _dbContext.Users.AddAsync(user, cancellationToken);

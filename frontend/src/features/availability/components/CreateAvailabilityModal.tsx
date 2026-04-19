@@ -20,7 +20,12 @@ const weekDaySchema = z.union([
 
 const createAvailabilitySchema = z.object({
   agentId: z.string().uuid('Selecione um agente'),
-  weekDay: weekDaySchema,
+  weekDays: z
+    .array(weekDaySchema)
+    .min(1, 'Selecione ao menos um dia')
+    .refine((days) => days.every((day) => day >= WeekDay.Monday && day <= WeekDay.Friday), {
+      message: 'Selecione apenas dias entre segunda e sexta',
+    }),
   startTime: z.string().regex(timeRegex, 'Formato HH:mm'),
   endTime: z.string().regex(timeRegex, 'Formato HH:mm'),
 })
@@ -45,6 +50,9 @@ const weekDayOptions = Object.entries(weekDayLabel).map(([value, label]) => ({
   label,
 }))
 
+const businessWeekDayOptions = weekDayOptions.filter((option) =>
+  option.value >= WeekDay.Monday && option.value <= WeekDay.Friday)
+
 export function CreateAvailabilityModal({
   open,
   loading,
@@ -54,7 +62,7 @@ export function CreateAvailabilityModal({
 }: CreateAvailabilityModalProps) {
   const form = useForm<CreateAvailabilityFormValues>({
     resolver: zodResolver(createAvailabilitySchema),
-    defaultValues: { weekDay: WeekDay.Monday },
+    defaultValues: { weekDays: [WeekDay.Monday] },
   })
 
   const handleCancel = () => {
@@ -90,11 +98,23 @@ export function CreateAvailabilityModal({
         />
       </Form.Item>
 
-      <Form.Item required label="Dia da semana">
+      <Form.Item
+        required
+        label="Dias da semana"
+        validateStatus={form.formState.errors.weekDays ? 'error' : ''}
+        help={form.formState.errors.weekDays?.message}
+      >
         <Controller
-          name="weekDay"
+          name="weekDays"
           control={form.control}
-          render={({ field }) => <Select {...field} options={weekDayOptions} />}
+          render={({ field }) => (
+            <Select
+              {...field}
+              mode="multiple"
+              options={businessWeekDayOptions}
+              placeholder="Selecione um ou mais dias"
+            />
+          )}
         />
       </Form.Item>
 

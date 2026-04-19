@@ -1,8 +1,9 @@
 import type { AxiosError } from 'axios'
 
 interface ApiErrorBody {
+  title?: string
   message?: string
-  errors?: Record<string, string[]>
+  errors?: Record<string, string[]> | string[]
 }
 
 export function extractApiError(err: unknown, fallback = 'Ocorreu um erro inesperado.'): string {
@@ -12,11 +13,16 @@ export function extractApiError(err: unknown, fallback = 'Ocorreu um erro inespe
 
   const { status, data } = axiosErr.response
 
-  if (data?.errors) {
+  if (Array.isArray(data?.errors) && data.errors.length > 0) {
+    return data.errors[0]
+  }
+
+  if (data?.errors && !Array.isArray(data.errors)) {
     const first = Object.values(data.errors).flat()[0]
     if (first) return first
   }
 
+  if (data?.title) return data.title
   if (data?.message) return data.message
 
   switch (status) {

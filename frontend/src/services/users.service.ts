@@ -1,9 +1,18 @@
 import { api } from './api'
-import type { User, CreateUserRequest, UpdateUserRequest, SetClientDetailRequest, UserRoleValue } from '@/features/users/models/types'
+import type {
+  AgentLookup,
+  User,
+  CreateUserRequest,
+  UpdateUserRequest,
+  SetClientDetailRequest,
+  UserRoleValue,
+} from '@/features/users/models/types'
 
 export const usersService = {
   getAll: (role?: UserRoleValue) =>
     api.get<User[]>('/api/users', { params: role !== undefined ? { role } : {} }).then((r) => r.data),
+
+  getAgents: () => api.get<AgentLookup[]>('/api/users/agents').then((r) => r.data),
 
   getById: (id: string) => api.get<User>(`/api/users/${id}`).then((r) => r.data),
 

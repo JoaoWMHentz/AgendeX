@@ -36,7 +36,7 @@ export interface AvailableSlot {
 
 export interface CreateAvailabilityRequest {
   agentId: string
-  weekDay: WeekDayValue
+  weekDays: WeekDayValue[]
   startTime: string
   endTime: string
 }

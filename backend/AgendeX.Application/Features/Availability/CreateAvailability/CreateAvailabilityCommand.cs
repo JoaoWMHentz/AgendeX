@@ -5,7 +5,7 @@ namespace AgendeX.Application.Features.Availability;
 
 public sealed record CreateAvailabilityCommand(
     Guid AgentId,
-    WeekDay WeekDay,
+    IReadOnlyList<WeekDay> WeekDays,
     TimeOnly StartTime,
     TimeOnly EndTime
-) : IRequest<AvailabilityDto>;
+) : IRequest<IReadOnlyList<AvailabilityDto>>;

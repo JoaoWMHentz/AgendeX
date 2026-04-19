@@ -19,7 +19,7 @@ export function useUsers(role?: UserRoleValue, options?: QueryOptions) {
 export function useAgents(options?: QueryOptions) {
   return useQuery({
     queryKey: queryKeys.users.agents,
-    queryFn: () => usersService.getAll(1), // Agent = 1
+    queryFn: () => usersService.getAgents(),
     staleTime: 1000 * 60 * 5,
     enabled: options?.enabled ?? true,
   })

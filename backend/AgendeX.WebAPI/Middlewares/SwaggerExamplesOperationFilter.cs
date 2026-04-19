@@ -33,7 +33,7 @@ public sealed class SwaggerExamplesOperationFilter : IOperationFilter
         ["AvailabilityController.Create"] = new JsonObject
         {
             ["agentId"] = "00000000-0000-0000-0000-000000000000",
-            ["weekDay"] = 1,
+            ["weekDays"] = new JsonArray(1, 2, 3, 4, 5),
             ["startTime"] = "08:00",
             ["endTime"] = "17:00"
         },

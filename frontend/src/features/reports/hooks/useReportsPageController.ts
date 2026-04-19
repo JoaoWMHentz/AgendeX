@@ -6,6 +6,7 @@ import { useUsers } from '@/features/users/hooks/useUsers'
 import { UserRole } from '@/features/users/models/types'
 import { Roles } from '@/shared/constants/roles'
 import { notifyApiError } from '@/shared/utils/notifyApiError'
+import { getDefaultPeriodRange } from '@/shared/utils/date'
 import { useExportReportsCsv, useExportReportsXlsx, useReports } from '../useReports'
 import {
   ReportSortDirection,
@@ -33,6 +34,7 @@ export function useReportsPageController() {
   const isAdmin = user?.role === Roles.Administrator
 
   const [draftFilters, setDraftFilters] = useState<ReportFilters>({
+    ...getDefaultPeriodRange(),
     reportType: ReportType.TotalAppointmentsByAgent,
     sortBy: 'appointmentDate',
     sortDirection: ReportSortDirection.Desc,

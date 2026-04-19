@@ -3,11 +3,12 @@ import { message, Modal } from 'antd'
 import { useServiceTypes } from '@/features/service-types/useServiceTypes'
 import { useAgents } from '@/features/users/hooks/useUsers'
 import { notifyApiError } from '@/shared/utils/notifyApiError'
+import { getDefaultPeriodRange } from '@/shared/utils/date'
 import { useAppointments, useCancelAppointment, useReassignAppointment } from '../useAppointments'
 import { appointmentStatusLabel, type Appointment, type AppointmentFilters } from '../types'
 
 export function useAppointmentsPageController() {
-  const [filters, setFilters] = useState<AppointmentFilters>({})
+  const [filters, setFilters] = useState<AppointmentFilters>(() => getDefaultPeriodRange())
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [reassignAgentId, setReassignAgentId] = useState<string | undefined>()
   const [reassignModalOpen, setReassignModalOpen] = useState(false)

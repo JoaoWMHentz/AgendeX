@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { message, Modal } from 'antd'
 import { useServiceTypes } from '@/features/service-types/useServiceTypes'
 import { notifyApiError } from '@/shared/utils/notifyApiError'
+import { getDefaultPeriodRange } from '@/shared/utils/date'
 import { useAppointments, useCancelAppointment } from '../useAppointments'
 import {
   appointmentStatusLabel,
@@ -10,7 +11,7 @@ import {
 } from '../types'
 
 export function useClientMyAppointmentsController() {
-  const [filters, setFilters] = useState<AppointmentFilters>({})
+  const [filters, setFilters] = useState<AppointmentFilters>(() => getDefaultPeriodRange())
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
 
   const { data: appointments = [], isLoading, refetch } = useAppointments(filters)

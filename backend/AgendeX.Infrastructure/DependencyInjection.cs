@@ -29,8 +29,10 @@ public static class DependencyInjection
         services.AddScoped<IServiceTypeRepository, ServiceTypeRepository>();
         services.AddScoped<IAgentAvailabilityRepository, AgentAvailabilityRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IReportExportService, ReportExportService>();
 
         return services;
     }

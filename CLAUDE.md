@@ -235,11 +235,33 @@ Confirmed
 - 3.3 Query available slots for a specific agent + date (deducts confirmed/pending appointments)
 
 ### FR4 — Reports
-- Filters: Client(s), Agent(s), Period, Service Type, Status
-- Report types: by agent, by client, by status, completed vs canceled rate, by type
-- CSV and XLSX export
-- Sortable table by any column
-- Access: Administrator (full) and Agent (restricted to own data)
+- Access: only Administrator and Agent
+- Filters:
+  - Client(s): one or more clients; when profile is Agent, only clients that already had appointments with the logged-in agent are allowed
+  - Agent(s): one or more agents; when profile is Agent, only the logged-in agent is allowed
+  - Period: date interval
+  - Service Type
+  - Appointment Status
+  - Report Type
+- Report types:
+  - Total appointments by agent
+  - Total appointments by client
+  - Appointments by status
+  - Completed vs canceled rate
+  - Appointment distribution by service type
+- Result table (adaptable by report type) must include:
+  - Client name
+  - Agent name
+  - Appointment date
+  - Appointment time
+  - Service type
+  - Appointment status
+  - Created at
+  - Confirmed at
+  - Canceled at
+  - Rejection/Cancellation reason (when available)
+- Table sorting: sortable by any table column
+- Export: CSV and XLSX with all tabular data included
 
 ## Clean Architecture — Layers and Responsibilities
 
@@ -662,16 +684,22 @@ Notes:
   - Availability: CRUD for admin and slots query
   - Users: list/create/update/set client detail
   - Service Types: list for filters/select inputs
-4. UX and Error Handling
+4. Reports (FR4) — backend first
+  - Implement Reports feature in backend first (Application + Infrastructure + WebAPI)
+  - Enforce role scope in backend (Administrator full scope; Agent restricted scope)
+  - Deliver report queries with filters, sorting by table columns, and CSV/XLSX export
+  - Frontend consumes backend contracts after backend endpoints are stable
+5. UX and Error Handling
   - Central API error mapping to user-friendly messages
   - Consistent loading, empty states, and success/error feedback
-5. Infrastructure
+6. Infrastructure
   - Frontend Dockerfile
   - docker-compose update to orchestrate backend + frontend + database
 
 ### Scope Notes
-- Reports module (FR4) starts with navigation and structure; advanced exports (CSV/XLSX) can be delivered in a subsequent phase.
-- Prioritize completion of FR1, FR2, and FR3 with stable auth and permissions.
+- Reports module (FR4) starts implementation in backend first, including CSV/XLSX export in backend scope.
+- Frontend reports screens should be integrated after backend report endpoints and contracts are finalized.
+- Prioritize completion of FR1, FR2, and FR3 with stable auth and permissions, then deliver FR4 end-to-end.
 
 ## Authentication Details
 
@@ -718,5 +746,6 @@ Notes:
 
 ### Pending
 - [ ] Dockerfile do frontend e atualização do docker-compose para orquestrar a aplicação
-- [ ] Reports module (FR4) — queries + CSV/XLSX export
+- [ ] Reports module (FR4) backend — queries, role scope restrictions, sorting, CSV/XLSX export
+- [ ] Reports module (FR4) frontend — filters UI, table integration, exports actions
 - [ ] README e diagramas de arquitetura (Mermaid)

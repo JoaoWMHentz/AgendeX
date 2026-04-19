@@ -66,12 +66,12 @@ public sealed class SwaggerExamplesOperationFilter : IOperationFilter
     {
         string key = $"{context.MethodInfo.DeclaringType?.Name}.{context.MethodInfo.Name}";
 
-        if (!_examples.TryGetValue(key, out JsonNode? example)) return;
-        if (operation.RequestBody is null) return;
+        if (!_examples.TryGetValue(key, out JsonNode? example) || example is null) return;
+        if (operation.RequestBody?.Content is null) return;
 
         foreach (OpenApiMediaType mediaType in operation.RequestBody.Content.Values)
         {
-            mediaType.Example = example!.DeepClone()!;
+            mediaType.Example = example.DeepClone()!;
         }
     }
 }

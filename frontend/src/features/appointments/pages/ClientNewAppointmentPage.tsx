@@ -32,7 +32,7 @@ export function ClientNewAppointmentPage() {
       key: 'time',
       render: (_: unknown, row: AvailableSlotRow) => `${row.startTime} – ${row.endTime}`,
     },
-    { title: 'Atendente', dataIndex: 'agentName' },
+    { title: 'Agente', dataIndex: 'agentName' },
     {
       title: 'Ação',
       key: 'action',

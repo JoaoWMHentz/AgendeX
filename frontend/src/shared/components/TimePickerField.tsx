@@ -19,13 +19,14 @@ export function TimePickerField({
   style,
   ...rest
 }: TimePickerFieldProps) {
+  const inputFormat = format === 'HH:mm' ? { format: 'HH:mm', type: 'mask' as const } : format
   const parsedValue: Dayjs | null = value ? dayjs(value, format) : null
 
   return (
     <TimePicker
       {...rest}
       style={{ width: '100%', ...style }}
-      format={format}
+      format={inputFormat}
       minuteStep={minuteStep}
       popupClassName={popupClassName}
       value={parsedValue}

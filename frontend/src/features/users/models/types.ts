@@ -1,3 +1,5 @@
+import { RoleLabels } from '@/shared/constants/roles'
+
 // Matches C# UserRole enum: Administrator=0, Agent=1, Client=2
 export const UserRole = {
   Administrator: 0,
@@ -7,10 +9,16 @@ export const UserRole = {
 export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole]
 
 export const userRoleLabel: Record<UserRoleValue, string> = {
-  0: 'Administrador',
-  1: 'Atendente',
-  2: 'Cliente',
+  0: RoleLabels.Administrator,
+  1: RoleLabels.Agent,
+  2: RoleLabels.Client,
 }
+
+export const userRoleOptions = [
+  { value: UserRole.Administrator, label: userRoleLabel[UserRole.Administrator] },
+  { value: UserRole.Agent, label: userRoleLabel[UserRole.Agent] },
+  { value: UserRole.Client, label: userRoleLabel[UserRole.Client] },
+]
 
 export interface ClientDetail {
   id: string

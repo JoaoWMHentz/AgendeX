@@ -92,7 +92,7 @@ export function AppointmentDetailModal({
     >
       <Descriptions column={2} size="small" style={{ marginTop: 8, marginBottom: 16 }}>
         <Descriptions.Item label="Tipo">{appointment.serviceTypeDescription}</Descriptions.Item>
-        <Descriptions.Item label="Atendente">{appointment.agentName}</Descriptions.Item>
+        <Descriptions.Item label="Agente">{appointment.agentName}</Descriptions.Item>
         <Descriptions.Item label="Cliente">{appointment.clientName}</Descriptions.Item>
         <Descriptions.Item label="Data">
           {formatDateBr(appointment.date)}

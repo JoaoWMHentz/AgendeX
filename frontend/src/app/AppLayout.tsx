@@ -15,7 +15,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/authStore'
 import { authService } from '@/services/auth.service'
 import { tokenStorage } from '@/services/tokenStorage'
-import { Roles, type Role } from '@/shared/constants/roles'
+import { Roles, getRoleLabel, type Role } from '@/shared/constants/roles'
 import { resolveTheme, useThemeStore } from '@/app/theme'
 
 const { Header, Sider, Content } = Layout
@@ -158,7 +158,7 @@ export function AppLayout() {
                 <Avatar size="small" icon={<UserOutlined />} />
                 <Text strong>{user?.name}</Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  {user?.role}
+                  {getRoleLabel(user?.role as Role)}
                 </Text>
               </Space>
             </Button>

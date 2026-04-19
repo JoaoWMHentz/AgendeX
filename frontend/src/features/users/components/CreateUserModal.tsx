@@ -2,7 +2,7 @@ import { Grid, Form, Input, Select, Row, Col } from 'antd'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserRole } from '../models/types'
+import { UserRole, userRoleOptions } from '../models/types'
 import { maskCpf, maskPhone } from '@/shared/utils/masks'
 import { DatePickerField } from '@/shared/components/DatePickerField'
 import { FormModal } from '@/shared/components/FormModal'
@@ -111,7 +111,7 @@ export function CreateUserModal({ open, loading, onClose, onSubmit }: CreateUser
                   render={({ field: controllerField }) =>
                     field === 'password' || field === 'confirmPassword'
                       ? <Input.Password {...controllerField} />
-                      : <Input {...controllerField} />
+                      : <Input {...controllerField} autoComplete={field === 'email' ? 'off' : undefined} />
                   }
                 />
               </Form.Item>
@@ -124,11 +124,7 @@ export function CreateUserModal({ open, loading, onClose, onSubmit }: CreateUser
                 render={({ field }) => (
                   <Select
                     {...field}
-                    options={[
-                      { value: UserRole.Administrator, label: 'Administrador' },
-                      { value: UserRole.Agent, label: 'Atendente' },
-                      { value: UserRole.Client, label: 'Cliente' },
-                    ]}
+                    options={userRoleOptions}
                   />
                 )}
               />

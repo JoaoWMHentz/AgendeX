@@ -20,7 +20,7 @@ export const apiErrorMap: ApiErrorMapEntry[] = [
   { key: 'the agent already has an appointment at this time', ptBr: 'O agente já possui um agendamento neste horário.' },
   { key: 'client details can only be set for users with role', ptBr: 'Os dados de cliente só podem ser definidos para usuários com perfil Cliente.' },
   { key: 'is already in use', ptBr: 'Este e-mail já está em uso.' },
-  { key: 'only administrator and agent can access reports', ptBr: 'Apenas Administrador e Atendente podem acessar relatórios.' },
+  { key: 'only administrator and agent can access reports', ptBr: 'Apenas Administrador e Agente podem acessar relatórios.' },
   { key: 'availability interval overlaps with an existing slot', ptBr: 'O intervalo de disponibilidade conflita com outro já cadastrado.' },
   { key: 'conflito de disponibilidade', ptBr: 'Há conflito de disponibilidade para o período informado.' },
   { key: 'at least one week day must be informed', ptBr: 'Informe pelo menos um dia da semana.' },

@@ -3,7 +3,7 @@ import { Form, Input, Select, Switch, Divider } from 'antd'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { UserRole, type User } from '../models/types'
+import { UserRole, userRoleOptions, type User } from '../models/types'
 import { maskCpf, maskPhone } from '@/shared/utils/masks'
 import { DatePickerField } from '@/shared/components/DatePickerField'
 import { FormModal } from '@/shared/components/FormModal'
@@ -98,11 +98,7 @@ export function EditUserModal({
               render={({ field }) => (
                 <Select
                   {...field}
-                  options={[
-                    { value: UserRole.Administrator, label: 'Administrador' },
-                    { value: UserRole.Agent, label: 'Atendente' },
-                    { value: UserRole.Client, label: 'Cliente' },
-                  ]}
+                  options={userRoleOptions}
                 />
               )}
             />

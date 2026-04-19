@@ -4,12 +4,13 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCurrentUserProfile, useUpdateUser, useSetClientDetail } from '../hooks/useUsers'
-import { userRoleLabel, UserRole } from '../models/types'
+import { UserRole } from '../models/types'
 import { useAuthStore } from '@/features/auth/authStore'
 import { maskCpf, maskPhone } from '@/shared/utils/masks'
 import { notifyApiError } from '@/shared/utils/notifyApiError'
 import { DatePickerField } from '@/shared/components/DatePickerField'
 import { formatDateBr } from '@/shared/utils/date'
+import { getRoleLabel } from '@/shared/constants/roles'
 import { resolveTheme, useThemeStore } from '@/app/theme'
 
 const { Title } = Typography
@@ -125,7 +126,7 @@ export function ProfilePage() {
           <Descriptions column={1} size="small" style={{ marginBottom: 16 }}>
             <Descriptions.Item label="E-mail">{profile.email}</Descriptions.Item>
             <Descriptions.Item label="Perfil">
-              <Tag>{userRoleLabel[profile.role]}</Tag>
+              <Tag>{getRoleLabel(me?.role ?? null)}</Tag>
             </Descriptions.Item>
             {!isClient && (
               <Descriptions.Item label="Status">

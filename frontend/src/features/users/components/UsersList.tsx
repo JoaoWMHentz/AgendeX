@@ -1,7 +1,7 @@
 import { Table, Button, Tag, Space, Select, Typography, Popconfirm } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { userRoleLabel, UserRole, type User, type UserRoleValue } from '../models/types'
+import { userRoleLabel, userRoleOptions, UserRole, type User, type UserRoleValue } from '../models/types'
 
 const { Title } = Typography
 
@@ -71,11 +71,7 @@ export function UsersList({
             placeholder="Filtrar por perfil"
             style={{ width: 160 }}
             onChange={(value) => onRoleFilterChange(value as UserRoleValue | undefined)}
-            options={[
-              { value: UserRole.Administrator, label: 'Administrador' },
-              { value: UserRole.Agent, label: 'Atendente' },
-              { value: UserRole.Client, label: 'Cliente' },
-            ]}
+            options={userRoleOptions}
           />
           {isAdmin && (
             <Button type="primary" icon={<PlusOutlined />} onClick={onOpenCreate}>

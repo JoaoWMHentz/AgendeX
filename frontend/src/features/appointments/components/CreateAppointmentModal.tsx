@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import { DatePicker, Form, Input, Modal, Select } from 'antd'
 import { z } from 'zod'
+import { TimePickerField } from '@/shared/components/TimePickerField'
 
 const createAppointmentSchema = z.object({
   title: z.string().min(1, 'Título obrigatório'),
@@ -10,7 +11,7 @@ const createAppointmentSchema = z.object({
   serviceTypeId: z.number({ message: 'Selecione o tipo' }),
   agentId: z.string().uuid('Selecione um agente'),
   date: z.string().min(1, 'Data obrigatória'),
-  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/, 'Formato HH:mm:ss'),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Formato HH:mm'),
   notes: z.string().optional(),
 })
 
@@ -129,14 +130,14 @@ export function CreateAppointmentModal({
 
         <Form.Item
           required
-          label="Horário (HH:mm:ss)"
+          label="Horário (HH:mm)"
           validateStatus={form.formState.errors.time ? 'error' : ''}
           help={form.formState.errors.time?.message}
         >
           <Controller
             name="time"
             control={form.control}
-            render={({ field }) => <Input {...field} placeholder="09:00:00" />}
+            render={({ field }) => <TimePickerField value={field.value} onChange={field.onChange} />}
           />
         </Form.Item>
 

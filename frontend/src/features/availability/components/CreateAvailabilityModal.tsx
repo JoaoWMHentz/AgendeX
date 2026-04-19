@@ -3,14 +3,15 @@ import { Controller, useForm } from 'react-hook-form'
 import { Form, Modal, Select } from 'antd'
 import { z } from 'zod'
 import { WeekDay, weekDayLabel, type WeekDayValue } from '../types'
+import { TimePickerField } from '@/shared/components/TimePickerField'
 
-const timeRegex = /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/
+const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
 
 const createAvailabilitySchema = z.object({
   agentId: z.string().uuid('Selecione um agente'),
   weekDay: z.number(),
-  startTime: z.string().regex(timeRegex, 'Formato HH:mm:ss'),
-  endTime: z.string().regex(timeRegex, 'Formato HH:mm:ss'),
+  startTime: z.string().regex(timeRegex, 'Formato HH:mm'),
+  endTime: z.string().regex(timeRegex, 'Formato HH:mm'),
 })
 
 export type CreateAvailabilityFormValues = z.infer<typeof createAvailabilitySchema>
@@ -98,19 +99,7 @@ export function CreateAvailabilityModal({
             <Controller
               name={fieldName}
               control={form.control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  placeholder="09:00:00"
-                  className="ant-input"
-                  style={{
-                    width: '100%',
-                    padding: '4px 11px',
-                    border: '1px solid #d9d9d9',
-                    borderRadius: 6,
-                  }}
-                />
-              )}
+              render={({ field }) => <TimePickerField value={field.value} onChange={field.onChange} />}
             />
           </Form.Item>
         ))}

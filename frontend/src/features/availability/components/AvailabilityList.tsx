@@ -82,7 +82,7 @@ export function AvailabilityList({
         </Title>
         {isAdmin && (
           <Button type="primary" icon={<PlusOutlined />} onClick={onOpenCreate}>
-            Nova janela
+            Novo Agendamento
           </Button>
         )}
       </div>

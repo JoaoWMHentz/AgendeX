@@ -3,6 +3,7 @@ using AgendeX.Infrastructure;
 using AgendeX.Infrastructure.Identity;
 using AgendeX.Infrastructure.Persistence;
 using AgendeX.WebAPI.Middlewares;
+using AgendeX.WebAPI.Serialization;
 using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new TimeOnlyMinutesJsonConverter());
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -38,7 +42,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         Type = JsonSchemaType.String,
         Format = "time",
-        Example = JsonValue.Create("09:00:00")
+        Example = JsonValue.Create("09:00")
     });
 
     options.MapType<DateOnly>(() => new OpenApiSchema

@@ -15,7 +15,7 @@ public sealed class SwaggerExamplesOperationFilter : IOperationFilter
             ["serviceTypeId"] = 1,
             ["agentId"] = "00000000-0000-0000-0000-000000000000",
             ["date"] = "2026-04-25",
-            ["time"] = "09:00:00",
+            ["time"] = "09:00",
             ["notes"] = JsonValue.Create<string?>(null)
         },
         ["AppointmentsController.Reject"] = new JsonObject
@@ -34,13 +34,13 @@ public sealed class SwaggerExamplesOperationFilter : IOperationFilter
         {
             ["agentId"] = "00000000-0000-0000-0000-000000000000",
             ["weekDay"] = 1,
-            ["startTime"] = "08:00:00",
-            ["endTime"] = "17:00:00"
+            ["startTime"] = "08:00",
+            ["endTime"] = "17:00"
         },
         ["AvailabilityController.Update"] = new JsonObject
         {
-            ["startTime"] = "09:00:00",
-            ["endTime"] = "18:00:00"
+            ["startTime"] = "09:00",
+            ["endTime"] = "18:00"
         },
         ["UsersController.Create"] = new JsonObject
         {

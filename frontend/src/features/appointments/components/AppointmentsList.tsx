@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { PlusOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Select, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import type { ReactNode } from 'react'
 import {
   AppointmentStatus,
   appointmentStatusColor,
@@ -61,7 +62,7 @@ export function AppointmentsList({
   onOpenReassign,
 }: AppointmentsListProps) {
   const renderActions = (record: Appointment) => {
-    const actions: JSX.Element[] = []
+    const actions: ReactNode[] = []
     const isFuture = isFutureAppointment(record)
 
     if (isAgent) {

@@ -80,6 +80,23 @@ export const darkTheme: ThemeConfig = {
       activeBorderColor: '#6c99cf',
       hoverBorderColor: '#5887c2',
     },
+    Select: {
+      borderRadius: 12,
+      colorBgContainer: 'rgba(255,255,255,0.08)',
+      optionSelectedBg: 'rgba(176,194,216,0.22)',
+      optionActiveBg: 'rgba(176,194,216,0.14)',
+      optionSelectedColor: '#f8fbff',
+    },
+    DatePicker: {
+      borderRadius: 12,
+      colorBgContainer: 'rgba(255,255,255,0.08)',
+      cellHoverBg: 'rgba(176,194,216,0.12)',
+      cellActiveWithRangeBg: 'rgba(176,194,216,0.16)',
+    },
+    InputNumber: {
+      borderRadius: 12,
+      colorBgContainer: 'rgba(255,255,255,0.08)',
+    },
     Layout: {
       siderBg: 'transparent',
       headerBg: 'rgba(20,20,20,0.42)',

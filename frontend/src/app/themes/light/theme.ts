@@ -76,6 +76,23 @@ export const lightTheme: ThemeConfig = {
       activeBorderColor: '#5d86bd',
       hoverBorderColor: '#87a8d0',
     },
+    Select: {
+      borderRadius: 12,
+      colorBgContainer: '#ffffff',
+      optionSelectedBg: '#e5ecf6',
+      optionActiveBg: '#edf3f9',
+      optionSelectedColor: '#1f3a52',
+    },
+    DatePicker: {
+      borderRadius: 12,
+      colorBgContainer: '#ffffff',
+      cellHoverBg: '#edf3f9',
+      cellActiveWithRangeBg: '#e5ecf6',
+    },
+    InputNumber: {
+      borderRadius: 12,
+      colorBgContainer: '#ffffff',
+    },
     Layout: {
       siderBg: '#ffffff',
       headerBg: '#ffffff',

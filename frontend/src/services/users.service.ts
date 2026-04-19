@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { User, CreateUserRequest, SetClientDetailRequest, UserRoleValue } from '@/features/users/types'
+import type { User, CreateUserRequest, UpdateUserRequest, SetClientDetailRequest, UserRoleValue } from '@/features/users/types'
 
 export const usersService = {
   getAll: (role?: UserRoleValue) =>
@@ -9,8 +9,8 @@ export const usersService = {
 
   create: (data: CreateUserRequest) => api.post<User>('/api/users', data).then((r) => r.data),
 
-  updateName: (id: string, name: string) =>
-    api.put<User>(`/api/users/${id}`, JSON.stringify(name)).then((r) => r.data),
+  updateUser: (id: string, data: UpdateUserRequest) =>
+    api.put<User>(`/api/users/${id}`, data).then((r) => r.data),
 
   setClientDetail: (id: string, data: SetClientDetailRequest) =>
     api.put<User>(`/api/users/${id}/client-detail`, data).then((r) => r.data),

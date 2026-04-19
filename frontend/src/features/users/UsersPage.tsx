@@ -1,38 +1,61 @@
 import { useState } from 'react'
 import {
-  Table, Button, Tag, Space, Modal, Form, Input, Select,
+  Table, Button, Tag, Space, Modal, Form, Input, Select, Switch, Divider, DatePicker,
   Typography, Popconfirm, message,
 } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useUsers, useCreateUser, useUpdateUserName, useDeleteUser, useSetClientDetail } from './useUsers'
+import dayjs from 'dayjs'
+import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useSetClientDetail } from './useUsers'
 import { userRoleLabel, UserRole, type User, type UserRoleValue } from './types'
 import { useAuthStore } from '@/features/auth/authStore'
 import { Roles } from '@/shared/constants/roles'
 import { extractApiError } from '@/shared/utils/apiError'
+import { maskCpf, maskPhone } from '@/shared/utils/masks'
 import type { ColumnsType } from 'antd/es/table'
 
 const { Title } = Typography
 
-// --- Create user schema ---
 const createSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  password: z.string().min(8, 'Mínimo 8 caracteres'),
+  confirmPassword: z.string().min(1, 'Confirme a senha'),
   role: z.number(),
+  cpf: z.string().optional(),
+  birthDate: z.string().optional(),
+  phone: z.string().optional(),
+  notes: z.string().optional(),
+}).superRefine((d, ctx) => {
+  if (d.password !== d.confirmPassword) {
+    ctx.addIssue({ code: 'custom', message: 'As senhas não coincidem', path: ['confirmPassword'] })
+  }
+  if (d.role === UserRole.Client) {
+    if (!d.cpf || d.cpf.replace(/\D/g, '').length < 11) {
+      ctx.addIssue({ code: 'custom', message: 'CPF inválido', path: ['cpf'] })
+    }
+    if (!d.birthDate) {
+      ctx.addIssue({ code: 'custom', message: 'Data obrigatória', path: ['birthDate'] })
+    }
+    if (!d.phone || d.phone.replace(/\D/g, '').length < 10) {
+      ctx.addIssue({ code: 'custom', message: 'Telefone obrigatório', path: ['phone'] })
+    }
+  }
 })
 type CreateForm = z.infer<typeof createSchema>
 
-// --- Client detail schema ---
-const clientDetailSchema = z.object({
-  cpf: z.string().min(11, 'CPF inválido').max(14),
-  birthDate: z.string().min(1, 'Data obrigatória'),
-  phone: z.string().min(1, 'Telefone obrigatório'),
+const editSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  role: z.number().optional(),
+  isActive: z.boolean().optional(),
+  cpf: z.string().optional(),
+  birthDate: z.string().optional(),
+  phone: z.string().optional(),
   notes: z.string().optional(),
 })
-type ClientDetailForm = z.infer<typeof clientDetailSchema>
+type EditForm = z.infer<typeof editSchema>
 
 export function UsersPage() {
   const { user: me } = useAuthStore()
@@ -40,33 +63,38 @@ export function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<UserRoleValue | undefined>()
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<User | null>(null)
-  const [clientDetailTarget, setClientDetailTarget] = useState<User | null>(null)
 
   const { data = [], isLoading } = useUsers(roleFilter)
   const createUser = useCreateUser()
-  const updateName = useUpdateUserName()
+  const updateUser = useUpdateUser()
   const deleteUser = useDeleteUser()
   const setClientDetail = useSetClientDetail()
 
-  // Create form
   const createForm = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
     defaultValues: { role: UserRole.Client },
   })
 
-  // Edit name form
-  const editForm = useForm<{ name: string }>({
-    resolver: zodResolver(z.object({ name: z.string().min(1) })),
+  const editForm = useForm<EditForm>({
+    resolver: zodResolver(editSchema),
   })
 
-  // Client detail form
-  const clientDetailForm = useForm<ClientDetailForm>({
-    resolver: zodResolver(clientDetailSchema),
-  })
+  const createRole = useWatch({ control: createForm.control, name: 'role' })
+  const showCreateClientFields = createRole === UserRole.Client
+
+  const editedRole = useWatch({ control: editForm.control, name: 'role' })
+  const showClientFields = editedRole === UserRole.Client
 
   const handleCreate = async (values: CreateForm) => {
     try {
-      await createUser.mutateAsync({ ...values, role: values.role as UserRoleValue })
+      const { confirmPassword: _, cpf, birthDate, phone, notes, ...payload } = values
+      const created = await createUser.mutateAsync({ ...payload, role: payload.role as UserRoleValue })
+      if (payload.role === UserRole.Client && cpf) {
+        await setClientDetail.mutateAsync({
+          id: created.id,
+          data: { cpf, birthDate: birthDate ?? '', phone: phone ?? '', notes },
+        })
+      }
       message.success('Usuário criado com sucesso')
       setCreateOpen(false)
       createForm.reset()
@@ -75,23 +103,31 @@ export function UsersPage() {
     }
   }
 
-  const handleUpdateName = async (values: { name: string }) => {
+  const handleUpdate = async (values: EditForm) => {
     if (!editTarget) return
     try {
-      await updateName.mutateAsync({ id: editTarget.id, name: values.name })
-      message.success('Nome atualizado')
+      await updateUser.mutateAsync({
+        id: editTarget.id,
+        data: {
+          name: values.name,
+          role: isAdmin ? (values.role as UserRoleValue) : undefined,
+          isActive: isAdmin ? values.isActive : undefined,
+        },
+      })
+      const effectiveRole = isAdmin ? values.role : editTarget.role
+      if (effectiveRole === UserRole.Client && values.cpf) {
+        await setClientDetail.mutateAsync({
+          id: editTarget.id,
+          data: {
+            cpf: values.cpf,
+            birthDate: values.birthDate ?? '',
+            phone: values.phone ?? '',
+            notes: values.notes,
+          },
+        })
+      }
+      message.success('Usuário atualizado')
       setEditTarget(null)
-    } catch (err) {
-      message.error(extractApiError(err))
-    }
-  }
-
-  const handleSetClientDetail = async (values: ClientDetailForm) => {
-    if (!clientDetailTarget) return
-    try {
-      await setClientDetail.mutateAsync({ id: clientDetailTarget.id, data: values })
-      message.success('Dados do cliente salvos')
-      setClientDetailTarget(null)
     } catch (err) {
       message.error(extractApiError(err))
     }
@@ -129,27 +165,19 @@ export function UsersPage() {
             size="small"
             onClick={() => {
               setEditTarget(record)
-              editForm.setValue('name', record.name)
+              editForm.reset({
+                name: record.name,
+                role: record.role,
+                isActive: record.isActive,
+                cpf: record.clientDetail?.cpf ?? '',
+                birthDate: record.clientDetail?.birthDate ?? '',
+                phone: record.clientDetail?.phone ?? '',
+                notes: record.clientDetail?.notes ?? '',
+              })
             }}
           >
             Editar
           </Button>
-          {record.role === UserRole.Client && (
-            <Button
-              size="small"
-              onClick={() => {
-                setClientDetailTarget(record)
-                clientDetailForm.reset({
-                  cpf: record.clientDetail?.cpf ?? '',
-                  birthDate: record.clientDetail?.birthDate ?? '',
-                  phone: record.clientDetail?.phone ?? '',
-                  notes: record.clientDetail?.notes ?? '',
-                })
-              }}
-            >
-              Dados do cliente
-            </Button>
-          )}
           <Popconfirm
             title="Desativar este usuário?"
             onConfirm={() => handleDelete(record.id)}
@@ -168,9 +196,7 @@ export function UsersPage() {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>
-          Usuários
-        </Title>
+        <Title level={4} style={{ margin: 0 }}>Usuários</Title>
         <Space>
           <Select
             allowClear
@@ -179,7 +205,7 @@ export function UsersPage() {
             onChange={(v) => setRoleFilter(v as UserRoleValue | undefined)}
             options={[
               { value: UserRole.Administrator, label: 'Administrador' },
-              { value: UserRole.Agent, label: 'Agente' },
+              { value: UserRole.Agent, label: 'Atendente' },
               { value: UserRole.Client, label: 'Cliente' },
             ]}
           />
@@ -199,13 +225,19 @@ export function UsersPage() {
         open={createOpen}
         onCancel={() => { setCreateOpen(false); createForm.reset() }}
         onOk={createForm.handleSubmit(handleCreate)}
-        confirmLoading={createUser.isPending}
+        confirmLoading={createUser.isPending || setClientDetail.isPending}
       >
         <Form layout="vertical">
-          {(['name', 'email', 'password'] as const).map((field) => (
+          {(['name', 'email', 'password', 'confirmPassword'] as const).map((field) => (
             <Form.Item
               key={field}
-              label={field === 'name' ? 'Nome' : field === 'email' ? 'E-mail' : 'Senha'}
+              required
+              label={
+                field === 'name' ? 'Nome'
+                : field === 'email' ? 'E-mail'
+                : field === 'password' ? 'Senha'
+                : 'Repetir senha'
+              }
               validateStatus={createForm.formState.errors[field] ? 'error' : ''}
               help={createForm.formState.errors[field]?.message}
             >
@@ -213,16 +245,14 @@ export function UsersPage() {
                 name={field}
                 control={createForm.control}
                 render={({ field: f }) =>
-                  field === 'password' ? (
-                    <Input.Password {...f} />
-                  ) : (
-                    <Input {...f} />
-                  )
+                  field === 'password' || field === 'confirmPassword'
+                    ? <Input.Password {...f} />
+                    : <Input {...f} />
                 }
               />
             </Form.Item>
           ))}
-          <Form.Item label="Perfil">
+          <Form.Item label="Perfil" required>
             <Controller
               name="role"
               control={createForm.control}
@@ -231,26 +261,97 @@ export function UsersPage() {
                   {...f}
                   options={[
                     { value: UserRole.Administrator, label: 'Administrador' },
-                    { value: UserRole.Agent, label: 'Agente' },
+                    { value: UserRole.Agent, label: 'Atendente' },
                     { value: UserRole.Client, label: 'Cliente' },
                   ]}
                 />
               )}
             />
           </Form.Item>
+          {showCreateClientFields && (
+            <>
+              <Divider style={{ borderColor: '#f0f0f0', margin: '12px 0' }} />
+              <Form.Item
+                required
+                label="CPF"
+                validateStatus={createForm.formState.errors.cpf ? 'error' : ''}
+                help={createForm.formState.errors.cpf?.message}
+              >
+                <Controller
+                  name="cpf"
+                  control={createForm.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="000.000.000-00"
+                      onChange={(e) => field.onChange(maskCpf(e.target.value))}
+                    />
+                  )}
+                />
+              </Form.Item>
+              <Form.Item
+                required
+                label="Data de nascimento"
+                validateStatus={createForm.formState.errors.birthDate ? 'error' : ''}
+                help={createForm.formState.errors.birthDate?.message}
+              >
+                <Controller
+                  name="birthDate"
+                  control={createForm.control}
+                  render={({ field }) => (
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      format="DD/MM/YYYY"
+                      value={field.value ? dayjs(field.value, 'YYYY-MM-DD') : null}
+                      onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
+                    />
+                  )}
+                />
+              </Form.Item>
+              <Form.Item
+                required
+                label="Telefone"
+                validateStatus={createForm.formState.errors.phone ? 'error' : ''}
+                help={createForm.formState.errors.phone?.message}
+              >
+                <Controller
+                  name="phone"
+                  control={createForm.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="(00) 00000-0000"
+                      onChange={(e) => field.onChange(maskPhone(e.target.value))}
+                    />
+                  )}
+                />
+              </Form.Item>
+              <Form.Item label="Observações">
+                <Controller
+                  name="notes"
+                  control={createForm.control}
+                  render={({ field }) => <Input {...field} />}
+                />
+              </Form.Item>
+              <Form.Item label="Ativo?">
+                <Switch checked disabled />
+              </Form.Item>
+            </>
+          )}
         </Form>
       </Modal>
 
-      {/* Edit name modal */}
+      {/* Edit modal */}
       <Modal
-        title="Editar nome"
+        title="Editar usuário"
         open={!!editTarget}
         onCancel={() => setEditTarget(null)}
-        onOk={editForm.handleSubmit(handleUpdateName)}
-        confirmLoading={updateName.isPending}
+        onOk={editForm.handleSubmit(handleUpdate)}
+        confirmLoading={updateUser.isPending || setClientDetail.isPending}
       >
         <Form layout="vertical">
           <Form.Item
+            required
             label="Nome"
             validateStatus={editForm.formState.errors.name ? 'error' : ''}
             help={editForm.formState.errors.name?.message}
@@ -261,39 +362,87 @@ export function UsersPage() {
               render={({ field }) => <Input {...field} />}
             />
           </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Client detail modal */}
-      <Modal
-        title="Dados do cliente"
-        open={!!clientDetailTarget}
-        onCancel={() => setClientDetailTarget(null)}
-        onOk={clientDetailForm.handleSubmit(handleSetClientDetail)}
-        confirmLoading={setClientDetail.isPending}
-      >
-        <Form layout="vertical">
-          {(
-            [
-              { name: 'cpf', label: 'CPF' },
-              { name: 'birthDate', label: 'Data de nascimento (YYYY-MM-DD)' },
-              { name: 'phone', label: 'Telefone' },
-              { name: 'notes', label: 'Observações' },
-            ] as const
-          ).map(({ name, label }) => (
-            <Form.Item
-              key={name}
-              label={label}
-              validateStatus={clientDetailForm.formState.errors[name] ? 'error' : ''}
-              help={clientDetailForm.formState.errors[name]?.message}
-            >
+          {isAdmin && (
+            <Form.Item label="Perfil">
               <Controller
-                name={name}
-                control={clientDetailForm.control}
-                render={({ field }) => <Input {...field} />}
+                name="role"
+                control={editForm.control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    options={[
+                      { value: UserRole.Administrator, label: 'Administrador' },
+                      { value: UserRole.Agent, label: 'Atendente' },
+                      { value: UserRole.Client, label: 'Cliente' },
+                    ]}
+                  />
+                )}
               />
             </Form.Item>
-          ))}
+          )}
+          {isAdmin && (
+            <Form.Item label="Conta ativa">
+              <Controller
+                name="isActive"
+                control={editForm.control}
+                render={({ field }) => (
+                  <Switch checked={field.value} onChange={field.onChange} />
+                )}
+              />
+            </Form.Item>
+          )}
+          {showClientFields && (
+            <>
+              <Divider style={{ borderColor: '#f0f0f0', margin: '12px 0' }} />
+              <Form.Item label="CPF" required>
+                <Controller
+                  name="cpf"
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="000.000.000-00"
+                      onChange={(e) => field.onChange(maskCpf(e.target.value))}
+                    />
+                  )}
+                />
+              </Form.Item>
+              <Form.Item label="Data de nascimento" required>
+                <Controller
+                  name="birthDate"
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      format="DD/MM/YYYY"
+                      value={field.value ? dayjs(field.value, 'YYYY-MM-DD') : null}
+                      onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
+                    />
+                  )}
+                />
+              </Form.Item>
+              <Form.Item label="Telefone" required>
+                <Controller
+                  name="phone"
+                  control={editForm.control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      placeholder="(00) 00000-0000"
+                      onChange={(e) => field.onChange(maskPhone(e.target.value))}
+                    />
+                  )}
+                />
+              </Form.Item>
+              <Form.Item label="Observações">
+                <Controller
+                  name="notes"
+                  control={editForm.control}
+                  render={({ field }) => <Input {...field} />}
+                />
+              </Form.Item>
+            </>
+          )}
         </Form>
       </Modal>
     </>

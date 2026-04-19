@@ -32,9 +32,15 @@ public class User
 
     public ClientDetail? ClientDetail { get; private set; }
 
-    public void Update(string name)
+    public void Update(string name, UserRole? role = null, bool? isActive = null)
     {
         Name = name;
+        if (role.HasValue) Role = role.Value;
+        if (isActive.HasValue)
+        {
+            if (isActive.Value) Activate();
+            else Deactivate();
+        }
     }
 
     public void Deactivate() => IsActive = false;

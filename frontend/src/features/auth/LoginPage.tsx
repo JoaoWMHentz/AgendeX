@@ -82,8 +82,9 @@ export function LoginPage() {
           />
         )}
 
-        <Form layout="vertical" onFinish={handleSubmit(onSubmit)} requiredMark={false}>
+        <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
           <Form.Item
+            required
             label="E-mail"
             validateStatus={errors.email ? 'error' : ''}
             help={errors.email?.message}
@@ -104,6 +105,7 @@ export function LoginPage() {
           </Form.Item>
 
           <Form.Item
+            required
             label="Senha"
             validateStatus={errors.password ? 'error' : ''}
             help={errors.password?.message}

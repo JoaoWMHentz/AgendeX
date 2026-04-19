@@ -180,14 +180,14 @@ export function AvailabilityPage() {
         confirmLoading={createAvailability.isPending}
       >
         <Form layout="vertical">
-          <Form.Item label="Agente" validateStatus={createForm.formState.errors.agentId ? 'error' : ''} help={createForm.formState.errors.agentId?.message}>
+          <Form.Item required label="Agente" validateStatus={createForm.formState.errors.agentId ? 'error' : ''} help={createForm.formState.errors.agentId?.message}>
             <Controller
               name="agentId"
               control={createForm.control}
               render={({ field }) => <Select {...field} options={agentOptions} placeholder="Selecione" />}
             />
           </Form.Item>
-          <Form.Item label="Dia da semana">
+          <Form.Item required label="Dia da semana">
             <Controller
               name="weekDay"
               control={createForm.control}
@@ -197,6 +197,7 @@ export function AvailabilityPage() {
           {(['startTime', 'endTime'] as const).map((f) => (
             <Form.Item
               key={f}
+              required
               label={f === 'startTime' ? 'Horário início' : 'Horário fim'}
               validateStatus={createForm.formState.errors[f] ? 'error' : ''}
               help={createForm.formState.errors[f]?.message}
@@ -223,6 +224,7 @@ export function AvailabilityPage() {
           {(['startTime', 'endTime'] as const).map((f) => (
             <Form.Item
               key={f}
+              required
               label={f === 'startTime' ? 'Horário início' : 'Horário fim'}
               validateStatus={updateForm.formState.errors[f] ? 'error' : ''}
               help={updateForm.formState.errors[f]?.message}

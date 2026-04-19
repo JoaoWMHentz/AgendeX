@@ -1,3 +1,4 @@
+using AgendeX.Application.Common.Interfaces;
 using AgendeX.Application.Features.Users;
 using AgendeX.Domain.Enums;
 using MediatR;
@@ -12,13 +13,18 @@ namespace AgendeX.WebAPI.Controllers;
 public sealed class UsersController : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly ICurrentUserService _currentUser;
     private readonly ILogger<UsersController> _logger;
 
-    public UsersController(ISender sender, ILogger<UsersController> logger)
+    public UsersController(ISender sender, ICurrentUserService currentUser, ILogger<UsersController> logger)
     {
         _sender = sender;
+        _currentUser = currentUser;
         _logger = logger;
     }
+
+    private Guid CurrentUserId => _currentUser.UserId;
+    private bool IsAdmin => _currentUser.Role == UserRole.Administrator;
 
     [HttpGet]
     [Authorize(Roles = Roles.Administrator)]
@@ -55,24 +61,37 @@ public sealed class UsersController : ControllerBase
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(
-        Guid id, [FromBody] string name, CancellationToken cancellationToken)
+        Guid id, [FromBody] UpdateUserBody body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Update user requested for id {Id} with name {Name}", id, name);
-        UserDto user = await _sender.Send(new UpdateUserCommand(id, name), cancellationToken);
+        _logger.LogInformation("Update user requested for id {Id}", id);
+
+        if (!IsAdmin && CurrentUserId != id)
+            return Forbid();
+
+        // Only admins may change role or active status
+        UserRole? role = IsAdmin ? body.Role : null;
+        bool? isActive = IsAdmin ? body.IsActive : null;
+
+        UserDto user = await _sender.Send(new UpdateUserCommand(id, body.Name, role, isActive), cancellationToken);
         return Ok(user);
     }
 
     [HttpPut("{id:guid}/client-detail")]
-    [Authorize(Roles = Roles.Administrator)]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SetClientDetail(
         Guid id, [FromBody] SetClientDetailRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("SetClientDetail requested for user {Id}", id);
+
+        if (!IsAdmin && CurrentUserId != id)
+            return Forbid();
+
         UserDto user = await _sender.Send(
             new SetClientDetailCommand(id, body.CPF, body.BirthDate, body.Phone, body.Notes),
             cancellationToken);

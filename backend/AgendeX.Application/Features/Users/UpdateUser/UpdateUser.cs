@@ -1,10 +1,18 @@
 using AgendeX.Domain.Entities;
+using AgendeX.Domain.Enums;
 using AgendeX.Domain.Interfaces;
 using MediatR;
 
 namespace AgendeX.Application.Features.Users;
 
-public sealed record UpdateUserCommand(Guid Id, string Name) : IRequest<UserDto>;
+public sealed record UpdateUserBody(string Name, UserRole? Role, bool? IsActive);
+
+public sealed record UpdateUserCommand(
+    Guid Id,
+    string Name,
+    UserRole? Role,
+    bool? IsActive
+) : IRequest<UserDto>;
 
 public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, UserDto>
 {
@@ -20,7 +28,7 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
         User user = await _userRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new KeyNotFoundException($"User '{request.Id}' not found.");
 
-        user.Update(request.Name);
+        user.Update(request.Name, request.Role, request.IsActive);
         await _userRepository.SaveChangesAsync(cancellationToken);
 
         return UserMapper.ToDto(user);

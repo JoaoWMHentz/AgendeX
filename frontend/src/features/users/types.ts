@@ -8,7 +8,7 @@ export type UserRoleValue = (typeof UserRole)[keyof typeof UserRole]
 
 export const userRoleLabel: Record<UserRoleValue, string> = {
   0: 'Administrador',
-  1: 'Agente',
+  1: 'Atendente',
   2: 'Cliente',
 }
 
@@ -35,6 +35,12 @@ export interface CreateUserRequest {
   email: string
   password: string
   role: UserRoleValue
+}
+
+export interface UpdateUserRequest {
+  name: string
+  role?: UserRoleValue
+  isActive?: boolean
 }
 
 export interface SetClientDetailRequest {

@@ -272,13 +272,13 @@ export function AppointmentsPage() {
         width={520}
       >
         <Form layout="vertical">
-          <Form.Item label="Título" validateStatus={createForm.formState.errors.title ? 'error' : ''} help={createForm.formState.errors.title?.message}>
+          <Form.Item required label="Título" validateStatus={createForm.formState.errors.title ? 'error' : ''} help={createForm.formState.errors.title?.message}>
             <Controller name="title" control={createForm.control} render={({ field }) => <Input {...field} />} />
           </Form.Item>
           <Form.Item label="Descrição">
             <Controller name="description" control={createForm.control} render={({ field }) => <Input.TextArea {...field} rows={2} />} />
           </Form.Item>
-          <Form.Item label="Tipo de serviço" validateStatus={createForm.formState.errors.serviceTypeId ? 'error' : ''} help={createForm.formState.errors.serviceTypeId?.message}>
+          <Form.Item required label="Tipo de serviço" validateStatus={createForm.formState.errors.serviceTypeId ? 'error' : ''} help={createForm.formState.errors.serviceTypeId?.message}>
             <Controller
               name="serviceTypeId"
               control={createForm.control}
@@ -287,7 +287,7 @@ export function AppointmentsPage() {
               )}
             />
           </Form.Item>
-          <Form.Item label="Agente" validateStatus={createForm.formState.errors.agentId ? 'error' : ''} help={createForm.formState.errors.agentId?.message}>
+          <Form.Item required label="Agente" validateStatus={createForm.formState.errors.agentId ? 'error' : ''} help={createForm.formState.errors.agentId?.message}>
             <Controller
               name="agentId"
               control={createForm.control}
@@ -296,7 +296,7 @@ export function AppointmentsPage() {
               )}
             />
           </Form.Item>
-          <Form.Item label="Data" validateStatus={createForm.formState.errors.date ? 'error' : ''} help={createForm.formState.errors.date?.message}>
+          <Form.Item required label="Data" validateStatus={createForm.formState.errors.date ? 'error' : ''} help={createForm.formState.errors.date?.message}>
             <Controller
               name="date"
               control={createForm.control}
@@ -310,7 +310,7 @@ export function AppointmentsPage() {
               )}
             />
           </Form.Item>
-          <Form.Item label="Horário (HH:mm:ss)" validateStatus={createForm.formState.errors.time ? 'error' : ''} help={createForm.formState.errors.time?.message}>
+          <Form.Item required label="Horário (HH:mm:ss)" validateStatus={createForm.formState.errors.time ? 'error' : ''} help={createForm.formState.errors.time?.message}>
             <Controller name="time" control={createForm.control} render={({ field }) => <Input {...field} placeholder="09:00:00" />} />
           </Form.Item>
           <Form.Item label="Observações">
@@ -360,7 +360,7 @@ export function AppointmentsPage() {
         okButtonProps={{ disabled: !reassignAgentId }}
       >
         <Form layout="vertical">
-          <Form.Item label="Novo agente">
+          <Form.Item label="Novo agente" required>
             <Select
               style={{ width: '100%' }}
               options={agents.map((a) => ({ value: a.id, label: a.name }))}

@@ -7,7 +7,7 @@ import { MailOutlined, LockOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { authService } from '@/services/auth.service'
 import { useAuthStore } from './authStore'
-import type { AxiosError } from 'axios'
+import { extractApiError } from '@/shared/utils/apiError'
 
 const { Title, Text } = Typography
 
@@ -43,14 +43,7 @@ export function LoginPage() {
       setSession(response)
       navigate(from, { replace: true })
     } catch (err) {
-      const axiosErr = err as AxiosError<{ message?: string }>
-      const message =
-        axiosErr.response?.status === 401
-          ? 'E-mail ou senha inválidos.'
-          : axiosErr.response?.status === 429
-            ? 'Muitas tentativas. Aguarde um momento.'
-            : (axiosErr.response?.data?.message ?? 'Erro ao fazer login. Tente novamente.')
-      setApiError(message)
+      setApiError(extractApiError(err, 'Erro ao fazer login. Tente novamente.'))
     }
   }
 

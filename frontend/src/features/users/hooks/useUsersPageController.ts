@@ -4,7 +4,7 @@ import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useSetClientDeta
 import { UserRole, type User, type UserRoleValue } from '../models/types'
 import { useAuthStore } from '@/features/auth/authStore'
 import { Roles } from '@/shared/constants/roles'
-import { extractApiError } from '@/shared/utils/apiError'
+import { notifyApiError } from '@/shared/utils/notifyApiError'
 import type { CreateUserFormValues } from '../components/CreateUserModal'
 import type { EditUserFormValues } from '../components/EditUserModal'
 
@@ -49,7 +49,7 @@ export function useUsersPageController() {
       message.success('Usuário criado com sucesso')
       closeCreateModal()
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 
@@ -82,7 +82,7 @@ export function useUsersPageController() {
       message.success('Usuário atualizado')
       closeEditModal()
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 
@@ -91,7 +91,7 @@ export function useUsersPageController() {
       await deleteUser.mutateAsync(id)
       message.success('Usuário desativado')
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 

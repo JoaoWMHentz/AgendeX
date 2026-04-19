@@ -6,8 +6,8 @@ import { z } from 'zod'
 import { useCurrentUserProfile, useUpdateUser, useSetClientDetail } from '../hooks/useUsers'
 import { userRoleLabel, UserRole } from '../models/types'
 import { useAuthStore } from '@/features/auth/authStore'
-import { extractApiError } from '@/shared/utils/apiError'
 import { maskCpf, maskPhone } from '@/shared/utils/masks'
+import { notifyApiError } from '@/shared/utils/notifyApiError'
 import { DatePickerField } from '@/shared/components/DatePickerField'
 import { formatDateBr } from '@/shared/utils/date'
 import { resolveTheme, useThemeStore } from '@/app/theme'
@@ -59,7 +59,7 @@ export function ProfilePage() {
       await updateUser.mutateAsync({ id: me.id, data: { name: values.name, isActive: values.isActive } })
       message.success('Perfil atualizado com sucesso')
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 
@@ -69,7 +69,7 @@ export function ProfilePage() {
       await setClientDetail.mutateAsync({ id: me.id, data: values })
       message.success('Dados do cliente atualizados')
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 

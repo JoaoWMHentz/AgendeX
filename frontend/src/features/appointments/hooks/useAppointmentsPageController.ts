@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { message, Modal } from 'antd'
 import { useServiceTypes } from '@/features/service-types/useServiceTypes'
 import { useAgents } from '@/features/users/hooks/useUsers'
-import { extractApiError } from '@/shared/utils/apiError'
+import { notifyApiError } from '@/shared/utils/notifyApiError'
 import { useAppointments, useCancelAppointment, useReassignAppointment } from '../useAppointments'
 import { appointmentStatusLabel, type Appointment, type AppointmentFilters } from '../types'
 
@@ -41,7 +41,7 @@ export function useAppointmentsPageController() {
           message.success('Agendamento cancelado')
           closeDetail()
         } catch (err) {
-          message.error(extractApiError(err))
+          notifyApiError(err)
         }
       },
     })
@@ -55,7 +55,7 @@ export function useAppointmentsPageController() {
       closeReassignModal()
       closeDetail()
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 

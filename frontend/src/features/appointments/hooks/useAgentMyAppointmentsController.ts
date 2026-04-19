@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { message, Modal } from 'antd'
 import { useServiceTypes } from '@/features/service-types/useServiceTypes'
-import { extractApiError } from '@/shared/utils/apiError'
+import { notifyApiError } from '@/shared/utils/notifyApiError'
 import {
   useAppointments,
   useCompleteAppointment,
@@ -57,7 +57,7 @@ export function useAgentMyAppointmentsController() {
           message.success('Agendamento confirmado')
           closeDetail()
         } catch (err) {
-          message.error(extractApiError(err))
+          notifyApiError(err)
         }
       },
     })
@@ -70,7 +70,7 @@ export function useAgentMyAppointmentsController() {
       message.success('Agendamento rejeitado')
       closeDetail()
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 
@@ -84,7 +84,7 @@ export function useAgentMyAppointmentsController() {
       message.success('Agendamento concluído')
       closeDetail()
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 

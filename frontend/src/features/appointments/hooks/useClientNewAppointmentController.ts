@@ -9,7 +9,7 @@ import { useServiceTypes } from '@/features/service-types/useServiceTypes'
 import { useAgents } from '@/features/users/hooks/useUsers'
 import { availabilityService } from '@/services/availability.service'
 import { queryKeys } from '@/shared/queryKeys'
-import { extractApiError } from '@/shared/utils/apiError'
+import { notifyApiError } from '@/shared/utils/notifyApiError'
 import { useCreateAppointment } from '../useAppointments'
 
 const schema = z.object({
@@ -94,7 +94,7 @@ export function useClientNewAppointmentController() {
       message.success('Agendamento criado com sucesso')
       navigate('/client/my-appointments')
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
       closeConfirm()
     }
   })

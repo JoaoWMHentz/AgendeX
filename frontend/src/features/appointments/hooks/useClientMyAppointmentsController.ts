@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { message, Modal } from 'antd'
 import { useServiceTypes } from '@/features/service-types/useServiceTypes'
-import { extractApiError } from '@/shared/utils/apiError'
+import { notifyApiError } from '@/shared/utils/notifyApiError'
 import { useAppointments, useCancelAppointment } from '../useAppointments'
 import {
   appointmentStatusLabel,
@@ -30,7 +30,7 @@ export function useClientMyAppointmentsController() {
           message.success('Agendamento cancelado')
           closeDetail()
         } catch (err) {
-          message.error(extractApiError(err))
+          notifyApiError(err)
         }
       },
     })

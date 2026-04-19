@@ -3,7 +3,7 @@ import { message } from 'antd'
 import { useAgents } from '@/features/users/hooks/useUsers'
 import { useAuthStore } from '@/features/auth/authStore'
 import { Roles } from '@/shared/constants/roles'
-import { extractApiError } from '@/shared/utils/apiError'
+import { notifyApiError } from '@/shared/utils/notifyApiError'
 import {
   useAvailabilityByAgent,
   useCreateAvailability,
@@ -62,7 +62,7 @@ export function useAvailabilityPageController() {
       )
       closeCreateModal()
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 
@@ -77,7 +77,7 @@ export function useAvailabilityPageController() {
       message.success('Disponibilidade atualizada')
       closeEditModal()
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 
@@ -86,7 +86,7 @@ export function useAvailabilityPageController() {
       await deleteAvailability.mutateAsync(id)
       message.success('Disponibilidade desativada')
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 

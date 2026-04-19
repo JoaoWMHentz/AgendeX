@@ -5,7 +5,7 @@ import { useServiceTypes } from '@/features/service-types/useServiceTypes'
 import { useUsers } from '@/features/users/hooks/useUsers'
 import { UserRole } from '@/features/users/models/types'
 import { Roles } from '@/shared/constants/roles'
-import { extractApiError } from '@/shared/utils/apiError'
+import { notifyApiError } from '@/shared/utils/notifyApiError'
 import { useExportReportsCsv, useExportReportsXlsx, useReports } from '../useReports'
 import {
   ReportSortDirection,
@@ -74,7 +74,7 @@ export function useReportsPageController() {
       triggerDownload(file.blob, file.fileName)
       message.success('Relatório CSV exportado com sucesso.')
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 
@@ -89,7 +89,7 @@ export function useReportsPageController() {
       triggerDownload(file.blob, file.fileName)
       message.success('Relatório XLSX exportado com sucesso.')
     } catch (err) {
-      message.error(extractApiError(err))
+      notifyApiError(err)
     }
   }
 

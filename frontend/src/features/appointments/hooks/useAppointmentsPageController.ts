@@ -10,20 +10,17 @@ import {
   useCancelAppointment,
   useCompleteAppointment,
   useConfirmAppointment,
-  useCreateAppointment,
   useReassignAppointment,
   useRejectAppointment,
 } from '../useAppointments'
 import { appointmentStatusLabel, type Appointment, type AppointmentFilters } from '../types'
-import type { CreateAppointmentFormValues } from '../components/CreateAppointmentModal'
 
-type ModalType = 'create' | 'reject' | 'reassign' | 'complete' | null
+type ModalType = 'reject' | 'reassign' | 'complete' | null
 
 export function useAppointmentsPageController() {
   const { user: me } = useAuthStore()
   const isAdmin = me?.role === Roles.Administrator
   const isAgent = me?.role === Roles.Agent
-  const isClient = me?.role === Roles.Client
 
   const [filters, setFilters] = useState<AppointmentFilters>({})
   const [modal, setModal] = useState<{ type: ModalType; appointment?: Appointment }>({ type: null })
@@ -31,14 +28,10 @@ export function useAppointmentsPageController() {
   const [completeSummary, setCompleteSummary] = useState('')
   const [reassignAgentId, setReassignAgentId] = useState<string | undefined>()
 
-  const shouldLoadServiceTypes = isAdmin || isClient
-  const shouldLoadAgents = isAdmin || (isClient && modal.type === 'create')
-
   const { data: appointments = [], isLoading } = useAppointments(filters)
-  const { data: serviceTypes = [] } = useServiceTypes({ enabled: shouldLoadServiceTypes })
-  const { data: agents = [] } = useAgents({ enabled: shouldLoadAgents })
+  const { data: serviceTypes = [] } = useServiceTypes()
+  const { data: agents = [] } = useAgents({ enabled: isAdmin })
 
-  const createAppointment = useCreateAppointment()
   const confirmAppointment = useConfirmAppointment()
   const rejectAppointment = useRejectAppointment()
   const cancelAppointment = useCancelAppointment()
@@ -52,31 +45,9 @@ export function useAppointmentsPageController() {
     setReassignAgentId(undefined)
   }
 
-  const openCreateModal = () => {
-    setModal({ type: 'create' })
-  }
-
-  const openRejectModal = (appointment: Appointment) => {
-    setModal({ type: 'reject', appointment })
-  }
-
-  const openCompleteModal = (appointment: Appointment) => {
-    setModal({ type: 'complete', appointment })
-  }
-
-  const openReassignModal = (appointment: Appointment) => {
-    setModal({ type: 'reassign', appointment })
-  }
-
-  const handleCreate = async (values: CreateAppointmentFormValues) => {
-    try {
-      await createAppointment.mutateAsync(values)
-      message.success('Agendamento criado com sucesso')
-      closeModal()
-    } catch (err) {
-      message.error(extractApiError(err))
-    }
-  }
+  const openRejectModal = (appointment: Appointment) => setModal({ type: 'reject', appointment })
+  const openCompleteModal = (appointment: Appointment) => setModal({ type: 'complete', appointment })
+  const openReassignModal = (appointment: Appointment) => setModal({ type: 'reassign', appointment })
 
   const handleConfirm = (id: string) => {
     Modal.confirm({
@@ -109,7 +80,6 @@ export function useAppointmentsPageController() {
 
   const handleReject = async () => {
     if (!modal.appointment || !rejectReason.trim()) return
-
     try {
       await rejectAppointment.mutateAsync({ id: modal.appointment.id, reason: rejectReason })
       message.success('Agendamento rejeitado')
@@ -121,7 +91,6 @@ export function useAppointmentsPageController() {
 
   const handleComplete = async () => {
     if (!modal.appointment) return
-
     try {
       await completeAppointment.mutateAsync({
         id: modal.appointment.id,
@@ -136,7 +105,6 @@ export function useAppointmentsPageController() {
 
   const handleReassign = async () => {
     if (!modal.appointment || !reassignAgentId) return
-
     try {
       await reassignAppointment.mutateAsync({ id: modal.appointment.id, agentId: reassignAgentId })
       message.success('Agendamento reatribuído')
@@ -149,7 +117,7 @@ export function useAppointmentsPageController() {
   return {
     isAdmin,
     isAgent,
-    isClient,
+    isClient: false,
     appointments,
     isLoading,
     filters,
@@ -158,18 +126,13 @@ export function useAppointmentsPageController() {
       value: Number(value),
       label,
     })),
-    serviceTypeOptions: serviceTypes.map((serviceType) => ({
-      value: serviceType.id,
-      label: serviceType.description,
-    })),
+    serviceTypeOptions: serviceTypes.map((st) => ({ value: st.id, label: st.description })),
     agentOptions: agents.map((agent) => ({ value: agent.id, label: agent.name })),
     modal,
-    openCreateModal,
     openRejectModal,
     openCompleteModal,
     openReassignModal,
     closeModal,
-    createLoading: createAppointment.isPending,
     rejectLoading: rejectAppointment.isPending,
     completeLoading: completeAppointment.isPending,
     reassignLoading: reassignAppointment.isPending,
@@ -179,7 +142,6 @@ export function useAppointmentsPageController() {
     setCompleteSummary,
     reassignAgentId,
     setReassignAgentId,
-    handleCreate,
     handleConfirm,
     handleCancel,
     handleReject,

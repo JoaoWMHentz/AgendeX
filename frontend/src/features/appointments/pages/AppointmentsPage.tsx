@@ -1,6 +1,5 @@
 import { AppointmentsList } from '../components/AppointmentsList'
 import { CompleteAppointmentModal } from '../components/CompleteAppointmentModal'
-import { CreateAppointmentModal } from '../components/CreateAppointmentModal'
 import { ReassignAppointmentModal } from '../components/ReassignAppointmentModal'
 import { RejectAppointmentModal } from '../components/RejectAppointmentModal'
 import { useAppointmentsPageController } from '../hooks/useAppointmentsPageController'
@@ -18,12 +17,10 @@ export function AppointmentsPage() {
     serviceTypeOptions,
     agentOptions,
     modal,
-    openCreateModal,
     openRejectModal,
     openCompleteModal,
     openReassignModal,
     closeModal,
-    createLoading,
     rejectLoading,
     completeLoading,
     reassignLoading,
@@ -33,7 +30,6 @@ export function AppointmentsPage() {
     setCompleteSummary,
     reassignAgentId,
     setReassignAgentId,
-    handleCreate,
     handleConfirm,
     handleCancel,
     handleReject,
@@ -54,21 +50,11 @@ export function AppointmentsPage() {
         serviceTypeOptions={serviceTypeOptions}
         agentOptions={agentOptions}
         onFiltersChange={setFilters}
-        onOpenCreate={openCreateModal}
         onConfirm={handleConfirm}
         onOpenReject={openRejectModal}
         onCancel={handleCancel}
         onOpenComplete={openCompleteModal}
         onOpenReassign={openReassignModal}
-      />
-
-      <CreateAppointmentModal
-        open={modal.type === 'create'}
-        loading={createLoading}
-        serviceTypeOptions={serviceTypeOptions}
-        agentOptions={agentOptions}
-        onClose={closeModal}
-        onSubmit={handleCreate}
       />
 
       <RejectAppointmentModal

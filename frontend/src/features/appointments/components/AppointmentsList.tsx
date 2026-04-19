@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import { PlusOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Select, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ReactNode } from 'react'
@@ -31,7 +30,6 @@ type AppointmentsListProps = {
   serviceTypeOptions: Option[]
   agentOptions: Option[]
   onFiltersChange: (filters: AppointmentFilters) => void
-  onOpenCreate: () => void
   onConfirm: (id: string) => void
   onOpenReject: (appointment: Appointment) => void
   onCancel: (id: string) => void
@@ -54,7 +52,6 @@ export function AppointmentsList({
   serviceTypeOptions,
   agentOptions,
   onFiltersChange,
-  onOpenCreate,
   onConfirm,
   onOpenReject,
   onCancel,
@@ -151,12 +148,6 @@ export function AppointmentsList({
         <Title level={4} style={{ margin: 0 }}>
           Agendamentos
         </Title>
-
-        {isClient && (
-          <Button type="primary" icon={<PlusOutlined />} onClick={onOpenCreate}>
-            Novo agendamento
-          </Button>
-        )}
       </div>
 
       <Space style={{ marginBottom: 16 }} wrap>

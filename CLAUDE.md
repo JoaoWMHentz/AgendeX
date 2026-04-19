@@ -628,11 +628,24 @@ Notes:
 
 **04/19/2026 at 23:59** — mandatory submission via repository + Pandapé
 
-## Pending
+## Frontend — Implementation Status
 
-- [ ] Frontend React com Ant Design (estrutura inicial + layout base)
-- [ ] Fluxo de autenticação (login/refresh/logout) e guards por role
-- [ ] Módulos prioritários FR1, FR2 e FR3 no frontend
+### Done
+- Foundation: Vite + React + TS + Ant Design + React Query + RHF + Zod + Axios + Zustand + Router
+- Auth: login, logout, refresh token, JWT decode, Zustand session store, Axios interceptors
+- Layout: AppLayout (sidebar + header), ProtectedRoute (auth + role), theme (dark/light)
+- Users (Admin): list, create, edit, set client detail, delete — fully functional
+- Service Types: list — fully functional
+- Availability (Admin): list by agent, create, edit, delete windows — fully functional
+- Appointments (Admin/Agent): list with filters, confirm, reject, complete, reassign, cancel
+- Client flow: dedicated pages with role-based menu
+  - `/client/new-appointment` — form (title, description, service type, date) + slots table per agent + confirm modal
+  - `/client/my-appointments` — own appointments with cancel action
+- Role-based routing: Admin+Agent → /appointments + /availability; Client → /client/*
+- Shared components: FormModal, DatePickerField, TimePickerField
+
+### Pending
+- [ ] Agent flow — dedicated view or adaptations (if needed)
 - [ ] Dockerfile do frontend e atualização do docker-compose para orquestrar a aplicação
 - [ ] Reports module (FR4) — queries + CSV/XLSX export
-- [ ] Expandir a documentação com README e diagramas Mermaid
+- [ ] README e diagramas de arquitetura (Mermaid)

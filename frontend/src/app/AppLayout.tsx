@@ -7,6 +7,8 @@ import {
   UserOutlined,
   LogoutOutlined,
   ProfileOutlined,
+  PlusCircleOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/authStore'
@@ -30,13 +32,13 @@ const menuConfig: MenuItem[] = [
     key: '/appointments',
     icon: <CalendarOutlined />,
     label: 'Agendamentos',
-    allowedRoles: [Roles.Administrator, Roles.Agent, Roles.Client],
+    allowedRoles: [Roles.Administrator, Roles.Agent],
   },
   {
     key: '/availability',
     icon: <ClockCircleOutlined />,
     label: 'Disponibilidade',
-    allowedRoles: [Roles.Administrator, Roles.Agent, Roles.Client],
+    allowedRoles: [Roles.Administrator, Roles.Agent],
   },
   {
     key: '/users',
@@ -49,6 +51,18 @@ const menuConfig: MenuItem[] = [
     icon: <AppstoreOutlined />,
     label: 'Tipos de Serviço',
     allowedRoles: [Roles.Administrator],
+  },
+  {
+    key: '/client/new-appointment',
+    icon: <PlusCircleOutlined />,
+    label: 'Novo Agendamento',
+    allowedRoles: [Roles.Client],
+  },
+  {
+    key: '/client/my-appointments',
+    icon: <UnorderedListOutlined />,
+    label: 'Seus Agendamentos',
+    allowedRoles: [Roles.Client],
   },
 ]
 

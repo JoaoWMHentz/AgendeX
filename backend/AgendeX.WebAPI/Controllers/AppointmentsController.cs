@@ -21,10 +21,6 @@ public sealed class AppointmentsController : ControllerBase
         _currentUser = currentUser;
     }
 
-    private Guid CurrentUserId => _currentUser.UserId;
-    private bool IsAdmin => _currentUser.Role == UserRole.Administrator;
-    private bool IsAgent => _currentUser.Role == UserRole.Agent;
-
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<AppointmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(
@@ -33,8 +29,8 @@ public sealed class AppointmentsController : ControllerBase
         [FromQuery] DateOnly? from, [FromQuery] DateOnly? to,
         CancellationToken cancellationToken)
     {
-        Guid? filterClientId = IsAdmin ? clientId : (IsAgent ? null : CurrentUserId);
-        Guid? filterAgentId = IsAdmin ? agentId : (IsAgent ? CurrentUserId : agentId);
+        Guid? filterClientId = _currentUser.IsAdmin ? clientId : (_currentUser.IsAgent ? null : _currentUser.UserId);
+        Guid? filterAgentId = _currentUser.IsAdmin ? agentId : (_currentUser.IsAgent ? _currentUser.UserId : agentId);
 
         IReadOnlyList<AppointmentDto> appointments = await _sender.Send(
             new GetAppointmentsQuery(filterClientId, filterAgentId, serviceTypeId, status, from, to),
@@ -61,7 +57,7 @@ public sealed class AppointmentsController : ControllerBase
     {
         AppointmentDto appointment = await _sender.Send(new CreateAppointmentCommand(
             body.Title, body.Description, body.ServiceTypeId,
-            CurrentUserId, body.AgentId, body.Date, body.Time, body.Notes),
+            _currentUser.UserId, body.AgentId, body.Date, body.Time, body.Notes),
             cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { id = appointment.Id }, appointment);
@@ -75,7 +71,7 @@ public sealed class AppointmentsController : ControllerBase
     public async Task<IActionResult> Confirm(Guid id, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new ConfirmAppointmentCommand(id, CurrentUserId), cancellationToken);
+            new ConfirmAppointmentCommand(id, _currentUser.UserId), cancellationToken);
         return Ok(appointment);
     }
 
@@ -88,7 +84,7 @@ public sealed class AppointmentsController : ControllerBase
         Guid id, [FromBody] string rejectionReason, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new RejectAppointmentCommand(id, CurrentUserId, rejectionReason), cancellationToken);
+            new RejectAppointmentCommand(id, _currentUser.UserId, rejectionReason), cancellationToken);
         return Ok(appointment);
     }
 
@@ -100,7 +96,7 @@ public sealed class AppointmentsController : ControllerBase
     public async Task<IActionResult> Cancel(Guid id, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new CancelAppointmentCommand(id, CurrentUserId, IsAdmin), cancellationToken);
+            new CancelAppointmentCommand(id, _currentUser.UserId, _currentUser.IsAdmin), cancellationToken);
         return Ok(appointment);
     }
 
@@ -113,7 +109,7 @@ public sealed class AppointmentsController : ControllerBase
         Guid id, [FromBody] string? serviceSummary, CancellationToken cancellationToken)
     {
         AppointmentDto appointment = await _sender.Send(
-            new CompleteAppointmentCommand(id, CurrentUserId, serviceSummary), cancellationToken);
+            new CompleteAppointmentCommand(id, _currentUser.UserId, serviceSummary), cancellationToken);
         return Ok(appointment);
     }
 

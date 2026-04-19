@@ -23,9 +23,6 @@ public sealed class UsersController : ControllerBase
         _logger = logger;
     }
 
-    private Guid CurrentUserId => _currentUser.UserId;
-    private bool IsAdmin => _currentUser.Role == UserRole.Administrator;
-
     [HttpGet]
     [Authorize(Roles = Roles.Administrator)]
     [ProducesResponseType(typeof(IReadOnlyList<UserDto>), StatusCodes.Status200OK)]
@@ -68,12 +65,12 @@ public sealed class UsersController : ControllerBase
     {
         _logger.LogInformation("Update user requested for id {Id}", id);
 
-        if (!IsAdmin && CurrentUserId != id)
+        if (!_currentUser.IsAdmin && _currentUser.UserId != id)
             return Forbid();
 
         // Only admins may change role or active status
-        UserRole? role = IsAdmin ? body.Role : null;
-        bool? isActive = IsAdmin ? body.IsActive : null;
+        UserRole? role = _currentUser.IsAdmin ? body.Role : null;
+        bool? isActive = _currentUser.IsAdmin ? body.IsActive : null;
 
         UserDto user = await _sender.Send(new UpdateUserCommand(id, body.Name, role, isActive), cancellationToken);
         return Ok(user);
@@ -89,7 +86,7 @@ public sealed class UsersController : ControllerBase
     {
         _logger.LogInformation("SetClientDetail requested for user {Id}", id);
 
-        if (!IsAdmin && CurrentUserId != id)
+        if (!_currentUser.IsAdmin && _currentUser.UserId != id)
             return Forbid();
 
         UserDto user = await _sender.Send(

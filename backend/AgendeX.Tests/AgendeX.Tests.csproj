@@ -21,6 +21,7 @@
     <ProjectReference Include="..\AgendeX.Application\AgendeX.Application.csproj" />
     <ProjectReference Include="..\AgendeX.Domain\AgendeX.Domain.csproj" />
     <ProjectReference Include="..\AgendeX.Infrastructure\AgendeX.Infrastructure.csproj" />
+    <ProjectReference Include="..\AgendeX.WebAPI\AgendeX.WebAPI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

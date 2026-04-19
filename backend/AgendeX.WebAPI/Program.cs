@@ -55,6 +55,16 @@ builder.Services.AddMemoryCache();
 builder.Services.AddInMemoryRateLimiting();
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AgendeX.Application.Common.Interfaces.ICurrentUserService, AgendeX.WebAPI.Services.CurrentUserService>();
 
@@ -104,6 +114,7 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.UseIpRateLimiting();
 app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseCors("Frontend");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

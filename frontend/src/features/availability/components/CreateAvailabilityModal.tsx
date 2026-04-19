@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { Form, Select } from 'antd'
+import { Form, Select, theme as antdTheme } from 'antd'
 import { z } from 'zod'
 import { WeekDay, weekDayLabel } from '../types'
 import { TimePickerField } from '@/shared/components/TimePickerField'
@@ -31,21 +31,6 @@ const createAvailabilitySchema = z
     startTime: z.string().regex(timeRegex, 'Formato HH:mm'),
     endTime: z.string().regex(timeRegex, 'Formato HH:mm'),
     slotDurationMinutes: z.union([z.literal(30), z.literal(60)]).optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (!data.slotDurationMinutes || !data.startTime || !data.endTime) return
-    const [sh, sm] = data.startTime.split(':').map(Number)
-    const [eh, em] = data.endTime.split(':').map(Number)
-    const totalMinutes = (eh * 60 + em) - (sh * 60 + sm)
-    if (totalMinutes > 0 && totalMinutes % data.slotDurationMinutes !== 0) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['slotDurationMinutes'],
-        message: data.slotDurationMinutes === 60
-          ? 'Com slots de 1 hora, o período deve começar e terminar em horas cheias (ex: 08:00 → 10:00)'
-          : 'Com slots de 30 min, o período deve começar e terminar em hora cheia ou meia hora (ex: 08:00 → 09:30)',
-      })
-    }
   })
 
 export type CreateAvailabilityFormValues = z.infer<typeof createAvailabilitySchema>
@@ -78,6 +63,8 @@ export function CreateAvailabilityModal({
   onClose,
   onSubmit,
 }: CreateAvailabilityModalProps) {
+  const { token } = antdTheme.useToken()
+
   const form = useForm<CreateAvailabilityFormValues>({
     resolver: zodResolver(createAvailabilitySchema),
     defaultValues: { weekDays: [WeekDay.Monday] },
@@ -154,7 +141,14 @@ export function CreateAvailabilityModal({
 
       <Form.Item
         label="Dividir intervalo"
-        tooltip="Divide o período em slots iguais. Deixe vazio para criar um único intervalo."
+        tooltip={{
+          title: 'Divide o período em slots iguais. Deixe vazio para criar um único intervalo.',
+          color: token.colorBgElevated,
+          overlayInnerStyle: {
+            color: token.colorText,
+            border: `1px solid ${token.colorBorder}`,
+          },
+        }}
         validateStatus={form.formState.errors.slotDurationMinutes ? 'error' : ''}
         help={form.formState.errors.slotDurationMinutes?.message}
       >

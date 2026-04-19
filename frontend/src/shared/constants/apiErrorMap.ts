@@ -28,7 +28,7 @@ export const apiErrorMap: ApiErrorMapEntry[] = [
   { key: 'only monday to friday is allowed', ptBr: 'Somente segunda a sexta-feira é permitido.' },
   { key: 'endtime must be after starttime', ptBr: 'O horário final deve ser maior que o horário inicial.' },
   { key: 'slotdurationminutes must be 30 or 60', ptBr: 'A duração do slot deve ser 30 ou 60 minutos.' },
-  { key: 'the time range must be exactly divisible by the slot duration', ptBr: 'O intervalo de horário deve ser exatamente divisível pela duração do slot.' },
+  { key: 'the time range must be exactly divisible by the slot duration', ptBr: 'Não foi possível dividir o período com a duração de slot selecionada. Ajuste o horário de início/fim para fechar exatamente (ex.: slot 30 min: 08:00-09:30; slot 60 min: 08:00-10:00).' },
   { key: 'date cannot be in the past', ptBr: 'A data não pode estar no passado.' },
   { key: 'from date must be less than or equal to to date', ptBr: 'A data inicial deve ser menor ou igual à data final.' },
   { key: 'sortby is invalid', ptBr: 'O campo de ordenação informado é inválido.' },

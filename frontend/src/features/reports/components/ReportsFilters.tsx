@@ -1,10 +1,8 @@
-import dayjs from 'dayjs'
-import { Button, DatePicker, Select, Space } from 'antd'
+import { Button, Select, Space } from 'antd'
 import { DownloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { DateRangePickerField } from '@/shared/components/DateRangePickerField'
 import { reportTypeLabel, type ReportFilters, type ReportTypeValue } from '../types'
 import type { AppointmentStatusValue } from '@/features/appointments/types'
-
-const { RangePicker } = DatePicker
 
 type Option = {
   value: string | number
@@ -112,15 +110,13 @@ export function ReportsFilters({
         }
       />
 
-      <RangePicker
-        value={[
-          filters.from ? dayjs(filters.from, 'YYYY-MM-DD') : null,
-          filters.to ? dayjs(filters.to, 'YYYY-MM-DD') : null,
-        ]}
-        onChange={(dates) =>
+      <DateRangePickerField
+        from={filters.from}
+        to={filters.to}
+        onChange={({ from, to }) =>
           onFiltersChange({
-            from: dates?.[0]?.format('YYYY-MM-DD'),
-            to: dates?.[1]?.format('YYYY-MM-DD'),
+            from,
+            to,
           })
         }
       />

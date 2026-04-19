@@ -1,7 +1,8 @@
-import dayjs from 'dayjs'
-import { Button, DatePicker, Select, Space, Table, Tag, Typography } from 'antd'
+import { Button, Select, Space, Table, Tag, Typography } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+import { DateRangePickerField } from '@/shared/components/DateRangePickerField'
+import { formatDateTimeFromParts } from '@/shared/utils/date'
 import {
   appointmentStatusColor,
   appointmentStatusLabel,
@@ -11,7 +12,6 @@ import {
 } from '../types'
 
 const { Title } = Typography
-const { RangePicker } = DatePicker
 
 type Option = {
   value: string | number
@@ -27,6 +27,7 @@ type AppointmentsListProps = {
   serviceTypeOptions: Option[]
   agentOptions?: Option[]
   showAgentFilter?: boolean
+  showClientColumn?: boolean
   showAgentColumn?: boolean
   onFiltersChange: (filters: AppointmentFilters) => void
   onRowClick: (appointment: Appointment) => void
@@ -42,6 +43,7 @@ export function AppointmentsList({
   serviceTypeOptions,
   agentOptions = [],
   showAgentFilter = false,
+  showClientColumn = true,
   showAgentColumn = true,
   onFiltersChange,
   onRowClick,
@@ -49,12 +51,12 @@ export function AppointmentsList({
 }: AppointmentsListProps) {
   const columns: ColumnsType<Appointment> = [
     { title: 'Título', dataIndex: 'title', ellipsis: true },
-    { title: 'Cliente', dataIndex: 'clientName' },
+    ...(showClientColumn ? [{ title: 'Cliente', dataIndex: 'clientName' } as const] : []),
     ...(showAgentColumn ? [{ title: 'Agente', dataIndex: 'agentName' } as const] : []),
     { title: 'Tipo', dataIndex: 'serviceTypeDescription' },
     {
       title: 'Data / Hora',
-      render: (_: unknown, a: Appointment) => `${a.date} ${a.time.slice(0, 5)}`,
+      render: (_: unknown, a: Appointment) => formatDateTimeFromParts(a.date, a.time),
     },
     {
       title: 'Status',
@@ -107,14 +109,10 @@ export function AppointmentsList({
           />
         )}
 
-        <RangePicker
-          onChange={(dates) =>
-            onFiltersChange({
-              ...filters,
-              from: dates?.[0]?.format('YYYY-MM-DD'),
-              to: dates?.[1]?.format('YYYY-MM-DD'),
-            })
-          }
+        <DateRangePickerField
+          from={filters.from}
+          to={filters.to}
+          onChange={({ from, to }) => onFiltersChange({ ...filters, from, to })}
         />
 
         {onRefresh && (

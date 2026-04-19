@@ -1,14 +1,15 @@
-import { Card, Descriptions, Typography, Button, Form, Input, Tag, Spin, message, Space, Switch, DatePicker, theme as antdTheme } from 'antd'
+import { Card, Descriptions, Typography, Button, Form, Input, Tag, Spin, message, Space, Switch, theme as antdTheme } from 'antd'
 import { UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import dayjs from 'dayjs'
 import { useCurrentUserProfile, useUpdateUser, useSetClientDetail } from '../hooks/useUsers'
 import { userRoleLabel, UserRole } from '../models/types'
 import { useAuthStore } from '@/features/auth/authStore'
 import { extractApiError } from '@/shared/utils/apiError'
 import { maskCpf, maskPhone } from '@/shared/utils/masks'
+import { DatePickerField } from '@/shared/components/DatePickerField'
+import { formatDateBr } from '@/shared/utils/date'
 import { resolveTheme, useThemeStore } from '@/app/theme'
 
 const { Title } = Typography
@@ -134,7 +135,7 @@ export function ProfilePage() {
               </Descriptions.Item>
             )}
             <Descriptions.Item label="Membro desde">
-              {dayjs(profile.createdAt).format('DD/MM/YYYY')}
+              {formatDateBr(profile.createdAt)}
             </Descriptions.Item>
           </Descriptions>
 
@@ -180,12 +181,7 @@ export function ProfilePage() {
                 name="birthDate"
                 control={clientDetailForm.control}
                 render={({ field }) => (
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    format="DD/MM/YYYY"
-                    value={field.value ? dayjs(field.value, 'YYYY-MM-DD') : null}
-                    onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
-                  />
+                  <DatePickerField value={field.value} onChange={field.onChange} />
                 )}
               />
             </Form.Item>

@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { Button, Descriptions, Modal, Space, Tag, Typography } from 'antd'
+import { formatDateBr } from '@/shared/utils/date'
 import {
   AppointmentStatus,
   appointmentStatusColor,
@@ -94,7 +95,7 @@ export function AppointmentDetailModal({
         <Descriptions.Item label="Atendente">{appointment.agentName}</Descriptions.Item>
         <Descriptions.Item label="Cliente">{appointment.clientName}</Descriptions.Item>
         <Descriptions.Item label="Data">
-          {dayjs(appointment.date).format('DD/MM/YYYY')}
+          {formatDateBr(appointment.date)}
         </Descriptions.Item>
         <Descriptions.Item label="Hora">{appointment.time.slice(0, 5)}</Descriptions.Item>
         <Descriptions.Item label="Status" span={2}>

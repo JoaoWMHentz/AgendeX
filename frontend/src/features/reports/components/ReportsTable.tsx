@@ -1,6 +1,6 @@
-import dayjs from 'dayjs'
 import { Table, Tag } from 'antd'
 import type { TableColumnsType, TableProps } from 'antd'
+import { formatDateBr, formatDateTimeBr } from '@/shared/utils/date'
 import {
   appointmentStatusColor,
   appointmentStatusLabel,
@@ -51,7 +51,7 @@ export function ReportsTable({ rows, loading, filters, onSortChange }: ReportsTa
       dataIndex: 'appointmentDate',
       sorter: true,
       sortOrder: resolveSortOrder(filters, 'appointmentDate'),
-      render: (value: string) => dayjs(value).format('DD/MM/YYYY'),
+      render: (value: string) => formatDateBr(value),
     },
     {
       title: 'Hora',
@@ -82,21 +82,21 @@ export function ReportsTable({ rows, loading, filters, onSortChange }: ReportsTa
       dataIndex: 'createdAt',
       sorter: true,
       sortOrder: resolveSortOrder(filters, 'createdAt'),
-      render: (value: string) => dayjs(value).format('DD/MM/YYYY HH:mm'),
+      render: (value: string) => formatDateTimeBr(value),
     },
     {
       title: 'Confirmado em',
       dataIndex: 'confirmedAt',
       sorter: true,
       sortOrder: resolveSortOrder(filters, 'confirmedAt'),
-      render: (value?: string) => (value ? dayjs(value).format('DD/MM/YYYY HH:mm') : '-'),
+      render: (value?: string) => (value ? formatDateTimeBr(value) : '-'),
     },
     {
       title: 'Cancelado em',
       dataIndex: 'canceledAt',
       sorter: true,
       sortOrder: resolveSortOrder(filters, 'canceledAt'),
-      render: (value?: string) => (value ? dayjs(value).format('DD/MM/YYYY HH:mm') : '-'),
+      render: (value?: string) => (value ? formatDateTimeBr(value) : '-'),
     },
     {
       title: 'Motivo',

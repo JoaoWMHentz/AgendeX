@@ -1,7 +1,9 @@
 import dayjs from 'dayjs'
 import { Controller } from 'react-hook-form'
-import { Button, Col, DatePicker, Form, Input, Modal, Row, Select, Spin, Table, Typography } from 'antd'
+import { Button, Col, Form, Input, Modal, Row, Select, Spin, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { DatePickerField } from '@/shared/components/DatePickerField'
+import { formatDateBr } from '@/shared/utils/date'
 import {
   useClientNewAppointmentController,
   type AvailableSlotRow,
@@ -89,10 +91,10 @@ export function ClientNewAppointmentPage() {
 
           <Col xs={24} sm={8}>
             <Form.Item required label="Data">
-              <DatePicker
-                style={{ width: '100%' }}
+              <DatePickerField
                 disabledDate={(date) => date.isBefore(dayjs(), 'day')}
-                onChange={(date) => setSelectedDate(date ? date.format('YYYY-MM-DD') : undefined)}
+                value={selectedDate}
+                onChange={(value) => setSelectedDate(value || undefined)}
               />
             </Form.Item>
           </Col>
@@ -140,7 +142,7 @@ export function ClientNewAppointmentPage() {
         {selectedSlot && (
           <Text>
             Confirma agendamento com <Text strong>{selectedSlot.agentName}</Text> no dia{' '}
-            <Text strong>{dayjs(selectedSlot.date).format('DD/MM/YYYY')}</Text> às{' '}
+            <Text strong>{formatDateBr(selectedSlot.date)}</Text> às{' '}
             <Text strong>{selectedSlot.startTime}</Text>?
           </Text>
         )}

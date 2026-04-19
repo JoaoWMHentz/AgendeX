@@ -1,79 +1,90 @@
+import { useEffect } from 'react'
 import type { ThemeConfig } from 'antd'
+import { darkTheme } from './themes/dark/theme'
+import { lightTheme } from './themes/light/theme'
+import { create } from 'zustand'
 
-export const theme: ThemeConfig = {
-  token: {
-    // Brand
-    colorPrimary: '#1677ff',
-    colorSuccess: '#52c41a',
-    colorWarning: '#faad14',
-    colorError: '#ff4d4f',
-    colorInfo: '#1677ff',
+export type ThemePreference = 'system' | 'light' | 'dark'
+export type ResolvedTheme = 'light' | 'dark'
 
-    // Typography
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-    fontSize: 14,
-    fontSizeLG: 16,
-    fontSizeSM: 12,
-    lineHeight: 1.5714,
+const THEME_STORAGE_KEY = 'agendex-theme-preference'
 
-    // Spacing
-    padding: 16,
-    paddingLG: 24,
-    paddingSM: 12,
-    paddingXS: 8,
-    margin: 16,
-    marginLG: 24,
-    marginSM: 12,
-    marginXS: 8,
+interface ThemeState {
+  preference: ThemePreference
+  systemTheme: ResolvedTheme
+  setPreference: (preference: ThemePreference) => void
+  setSystemTheme: (theme: ResolvedTheme) => void
+  toggleTheme: () => void
+}
 
-    // Border
-    borderRadius: 6,
-    borderRadiusLG: 8,
-    borderRadiusSM: 4,
-    lineWidth: 1,
-    lineType: 'solid',
+function readStoredPreference(): ThemePreference {
+  if (typeof window === 'undefined') {
+    return 'system'
+  }
 
-    // Motion
-    motionDurationFast: '0.1s',
-    motionDurationMid: '0.2s',
-    motionDurationSlow: '0.3s',
+  const storedPreference = window.localStorage.getItem(THEME_STORAGE_KEY)
+  if (storedPreference === 'light' || storedPreference === 'dark' || storedPreference === 'system') {
+    return storedPreference
+  }
 
-    // Shadow
-    boxShadow:
-      '0 1px 2px 0 rgba(0,0,0,0.03), 0 1px 6px -1px rgba(0,0,0,0.02), 0 2px 4px 0 rgba(0,0,0,0.02)',
-    boxShadowSecondary:
-      '0 6px 16px 0 rgba(0,0,0,0.08), 0 3px 6px -4px rgba(0,0,0,0.12), 0 9px 28px 8px rgba(0,0,0,0.05)',
+  return 'system'
+}
+
+function getBrowserTheme(): ResolvedTheme {
+  if (typeof window === 'undefined') {
+    return 'light'
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+export function resolveTheme(preference: ThemePreference, systemTheme: ResolvedTheme): ResolvedTheme {
+  return preference === 'system' ? systemTheme : preference
+}
+
+export function getThemeConfig(resolvedTheme: ResolvedTheme): ThemeConfig {
+  return resolvedTheme === 'dark' ? darkTheme : lightTheme
+}
+
+export const useThemeStore = create<ThemeState>((set, get) => ({
+  preference: readStoredPreference(),
+  systemTheme: getBrowserTheme(),
+  setPreference: (preference) => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(THEME_STORAGE_KEY, preference)
+    }
+
+    set({ preference })
   },
-  components: {
-    Layout: {
-      siderBg: '#001529',
-      headerBg: '#ffffff',
-      headerHeight: 56,
-      headerPadding: '0 24px',
-      bodyBg: '#f5f5f5',
-      footerBg: '#f5f5f5',
-    },
-    Menu: {
-      darkItemBg: '#001529',
-      darkItemSelectedBg: '#1677ff',
-      darkItemHoverBg: 'rgba(255,255,255,0.08)',
-      darkSubMenuItemBg: '#000c17',
-    },
-    Table: {
-      headerBg: '#fafafa',
-      rowHoverBg: '#f5f5f5',
-      borderColor: '#f0f0f0',
-    },
-    Button: {
-      primaryShadow: '0 2px 0 rgba(5,145,255,0.1)',
-    },
-    Card: {
-      boxShadowTertiary:
-        '0 1px 2px 0 rgba(0,0,0,0.03), 0 1px 6px -1px rgba(0,0,0,0.02), 0 2px 4px 0 rgba(0,0,0,0.02)',
-    },
-    Form: {
-      itemMarginBottom: 20,
-    },
+  setSystemTheme: (systemTheme) => {
+    set({ systemTheme })
   },
+  toggleTheme: () => {
+    const currentTheme = resolveTheme(get().preference, get().systemTheme)
+    const nextTheme: ResolvedTheme = currentTheme === 'dark' ? 'light' : 'dark'
+    get().setPreference(nextTheme)
+  },
+}))
+
+export function useThemeSync() {
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = (event: MediaQueryListEvent) => {
+      useThemeStore.getState().setSystemTheme(event.matches ? 'dark' : 'light')
+    }
+
+    useThemeStore.getState().setSystemTheme(mediaQuery.matches ? 'dark' : 'light')
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange)
+      return () => mediaQuery.removeEventListener('change', handleChange)
+    }
+
+    mediaQuery.addListener(handleChange)
+    return () => mediaQuery.removeListener(handleChange)
+  }, [])
 }

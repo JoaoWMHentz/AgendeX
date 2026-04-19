@@ -1,4 +1,4 @@
-import { Layout, Menu, Typography, Button, Space, Avatar, Dropdown } from 'antd'
+import { Layout, Menu, Typography, Button, Space, Avatar, Dropdown, theme as antdTheme } from 'antd'
 import {
   CalendarOutlined,
   ClockCircleOutlined,
@@ -13,6 +13,7 @@ import { useAuthStore } from '@/features/auth/authStore'
 import { authService } from '@/services/auth.service'
 import { tokenStorage } from '@/services/tokenStorage'
 import { Roles, type Role } from '@/shared/constants/roles'
+import { resolveTheme, useThemeStore } from '@/app/theme'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text } = Typography
@@ -55,6 +56,8 @@ export function AppLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearSession } = useAuthStore()
+  const { token } = antdTheme.useToken()
+  const resolvedTheme = useThemeStore((state) => resolveTheme(state.preference, state.systemTheme))
 
   const visibleMenuItems = menuConfig
     .filter((item) => user && item.allowedRoles.includes(user.role as Role))
@@ -92,12 +95,15 @@ export function AppLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider theme="dark" breakpoint="lg" collapsedWidth={0}>
-        <Title level={4} style={{ color: '#fff', textAlign: 'center', padding: '20px 0 16px', margin: 0 }}>
+      <Sider theme={resolvedTheme} breakpoint="lg" collapsedWidth={0}>
+        <Title
+          level={4}
+          style={{ color: resolvedTheme === 'dark' ? token.colorTextLightSolid : token.colorText, textAlign: 'center', padding: '20px 0 16px', margin: 0 }}
+        >
           AgendeX
         </Title>
         <Menu
-          theme="dark"
+          theme={resolvedTheme}
           mode="inline"
           selectedKeys={[location.pathname]}
           items={visibleMenuItems}
@@ -108,9 +114,12 @@ export function AppLayout() {
       <Layout>
         <Header
           style={{
-            background: '#fff',
+            background: token.colorBgContainer,
             padding: '0 24px',
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            boxShadow: token.boxShadowSecondary,
+            position: 'relative',
+            zIndex: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
@@ -129,7 +138,17 @@ export function AppLayout() {
           </Dropdown>
         </Header>
 
-        <Content style={{ margin: 16, padding: 24, background: '#fff', borderRadius: 8, minHeight: 280 }}>
+        <Content
+          style={{
+            margin: 16,
+            padding: 24,
+            background: token.colorBgContainer,
+            borderRadius: token.borderRadiusLG,
+            minHeight: 280,
+            border: `1px solid ${token.colorBorderSecondary}`,
+            boxShadow: token.boxShadow,
+          }}
+        >
           <Outlet />
         </Content>
       </Layout>

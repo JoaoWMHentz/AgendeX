@@ -1,4 +1,4 @@
-import { Card, Descriptions, Typography, Button, Form, Input, Tag, Spin, message, Space, Switch, DatePicker } from 'antd'
+import { Card, Descriptions, Typography, Button, Form, Input, Tag, Spin, message, Space, Switch, DatePicker, theme as antdTheme } from 'antd'
 import { UserOutlined } from '@ant-design/icons'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,6 +9,7 @@ import { userRoleLabel, UserRole } from './types'
 import { useAuthStore } from '@/features/auth/authStore'
 import { extractApiError } from '@/shared/utils/apiError'
 import { maskCpf, maskPhone } from '@/shared/utils/masks'
+import { resolveTheme, useThemeStore } from '@/app/theme'
 
 const { Title } = Typography
 
@@ -32,6 +33,9 @@ export function ProfilePage() {
   const { data: profile, isLoading } = useCurrentUserProfile()
   const updateUser = useUpdateUser()
   const setClientDetail = useSetClientDetail()
+  const { token } = antdTheme.useToken()
+  const resolvedTheme = useThemeStore((state) => resolveTheme(state.preference, state.systemTheme))
+  const toggleTheme = useThemeStore((state) => state.toggleTheme)
 
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -75,14 +79,19 @@ export function ProfilePage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <Space align="center" style={{ marginBottom: 24 }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: '50%', background: '#1677ff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <UserOutlined style={{ color: '#fff', fontSize: 22 }} />
-        </div>
-        <Title level={4} style={{ margin: 0 }}>Meu Perfil</Title>
+      <Space align="center" style={{ marginBottom: 24, width: '100%', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <Space align="center">
+          <div style={{
+            width: 48, height: 48, borderRadius: '50%', background: token.colorPrimary,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <UserOutlined style={{ color: token.colorTextLightSolid, fontSize: 22 }} />
+          </div>
+          <Title level={4} style={{ margin: 0 }}>Meu Perfil</Title>
+        </Space>
+        <Button type="default" onClick={toggleTheme}>
+          {resolvedTheme === 'dark' ? 'Usar tema claro' : 'Usar tema escuro'}
+        </Button>
       </Space>
 
       <Card title="Informações pessoais" style={{ marginBottom: 16 }}>

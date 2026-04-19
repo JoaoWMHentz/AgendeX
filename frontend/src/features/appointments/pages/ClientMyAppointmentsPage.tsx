@@ -1,21 +1,12 @@
-import dayjs from 'dayjs'
-import { Button, DatePicker, Descriptions, Modal, Select, Space, Table, Tag, Typography } from 'antd'
+import { Button, DatePicker, Select, Space, Table, Tag, Typography } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import {
-  AppointmentStatus,
-  appointmentStatusColor,
-  appointmentStatusLabel,
-  type Appointment,
-  type AppointmentStatusValue,
-} from '../types'
+import { appointmentStatusColor, appointmentStatusLabel, type Appointment, type AppointmentStatusValue } from '../types'
+import { AppointmentDetailModal } from '../components/AppointmentDetailModal'
 import { useClientMyAppointmentsController } from '../hooks/useClientMyAppointmentsController'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
-
-function isFutureAppointment(a: Appointment) {
-  return dayjs(`${a.date}T${a.time}`).isAfter(dayjs())
-}
 
 export function ClientMyAppointmentsPage() {
   const {
@@ -28,6 +19,7 @@ export function ClientMyAppointmentsPage() {
     closeDetail,
     statusOptions,
     serviceTypeOptions,
+    refetch,
     handleCancel,
   } = useClientMyAppointmentsController()
 
@@ -48,12 +40,6 @@ export function ClientMyAppointmentsPage() {
       ),
     },
   ]
-
-  const canCancel =
-    selectedAppointment &&
-    (selectedAppointment.status === AppointmentStatus.PendingConfirmation ||
-      selectedAppointment.status === AppointmentStatus.Confirmed) &&
-    isFutureAppointment(selectedAppointment)
 
   return (
     <>
@@ -87,6 +73,10 @@ export function ClientMyAppointmentsPage() {
             })
           }
         />
+
+        <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
+          Atualizar
+        </Button>
       </Space>
 
       <Table<Appointment>
@@ -98,52 +88,12 @@ export function ClientMyAppointmentsPage() {
         onRow={(record) => ({ onClick: () => openDetail(record), style: { cursor: 'pointer' } })}
       />
 
-      <Modal
-        open={!!selectedAppointment}
-        title={selectedAppointment?.title}
-        onCancel={closeDetail}
-        footer={
-          canCancel ? (
-            <Button danger onClick={() => handleCancel(selectedAppointment!.id)}>
-              Cancelar agendamento
-            </Button>
-          ) : null
-        }
-      >
-        {selectedAppointment && (
-          <>
-            <Descriptions column={2} size="small" style={{ marginTop: 8, marginBottom: 16 }}>
-              <Descriptions.Item label="Tipo">{selectedAppointment.serviceTypeDescription}</Descriptions.Item>
-              <Descriptions.Item label="Atendente">{selectedAppointment.agentName}</Descriptions.Item>
-              <Descriptions.Item label="Data">
-                {dayjs(selectedAppointment.date).format('DD/MM/YYYY')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Hora">{selectedAppointment.time.slice(0, 5)}</Descriptions.Item>
-              <Descriptions.Item label="Status" span={2}>
-                <Tag color={appointmentStatusColor[selectedAppointment.status]}>
-                  {appointmentStatusLabel[selectedAppointment.status]}
-                </Tag>
-              </Descriptions.Item>
-              {selectedAppointment.rejectionReason && (
-                <Descriptions.Item label="Motivo de rejeição" span={2}>
-                  {selectedAppointment.rejectionReason}
-                </Descriptions.Item>
-              )}
-              {selectedAppointment.serviceSummary && (
-                <Descriptions.Item label="Resumo do atendimento" span={2}>
-                  {selectedAppointment.serviceSummary}
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-
-            {selectedAppointment.description && (
-              <Typography.Paragraph style={{ margin: 0 }}>
-                {selectedAppointment.description}
-              </Typography.Paragraph>
-            )}
-          </>
-        )}
-      </Modal>
+      <AppointmentDetailModal
+        appointment={selectedAppointment}
+        onClose={closeDetail}
+        onCancel={handleCancel}
+        cancelRequiresFuture
+      />
     </>
   )
 }

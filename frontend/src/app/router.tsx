@@ -4,6 +4,7 @@ import { AppLayout } from './AppLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { AppointmentsPage } from '@/features/appointments/pages/AppointmentsPage'
+import { AgentMyAppointmentsPage } from '@/features/appointments/pages/AgentMyAppointmentsPage'
 import { ClientNewAppointmentPage } from '@/features/appointments/pages/ClientNewAppointmentPage'
 import { ClientMyAppointmentsPage } from '@/features/appointments/pages/ClientMyAppointmentsPage'
 import { AvailabilityPage } from '@/features/availability/pages/AvailabilityPage'
@@ -16,6 +17,7 @@ import { useAuthStore } from '@/features/auth/authStore'
 function RoleBasedRedirect() {
   const user = useAuthStore((s) => s.user)
   if (user?.role === Roles.Client) return <Navigate to="/client/my-appointments" replace />
+  if (user?.role === Roles.Agent) return <Navigate to="/agent/my-appointments" replace />
   return <Navigate to="/appointments" replace />
 }
 
@@ -34,21 +36,29 @@ export const router = createBrowserRouter([
           { index: true, element: <RoleBasedRedirect /> },
           { path: 'profile', element: <ProfilePage /> },
 
-          // Administrator + Agent
-          {
-            element: <ProtectedRoute allowedRoles={[Roles.Administrator, Roles.Agent]} />,
-            children: [
-              { path: 'appointments', element: <AppointmentsPage /> },
-              { path: 'availability', element: <AvailabilityPage /> },
-            ],
-          },
-
           // Administrator only
           {
             element: <ProtectedRoute allowedRoles={[Roles.Administrator]} />,
             children: [
+              { path: 'appointments', element: <AppointmentsPage /> },
               { path: 'users', element: <UsersPage /> },
               { path: 'service-types', element: <ServiceTypesPage /> },
+            ],
+          },
+
+          // Administrator + Agent
+          {
+            element: <ProtectedRoute allowedRoles={[Roles.Administrator, Roles.Agent]} />,
+            children: [
+              { path: 'availability', element: <AvailabilityPage /> },
+            ],
+          },
+
+          // Agent only
+          {
+            element: <ProtectedRoute allowedRoles={[Roles.Agent]} />,
+            children: [
+              { path: 'agent/my-appointments', element: <AgentMyAppointmentsPage /> },
             ],
           },
 

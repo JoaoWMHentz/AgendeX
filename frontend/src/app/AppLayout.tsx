@@ -32,7 +32,7 @@ const menuConfig: MenuItem[] = [
     key: '/appointments',
     icon: <CalendarOutlined />,
     label: 'Agendamentos',
-    allowedRoles: [Roles.Administrator, Roles.Agent],
+    allowedRoles: [Roles.Administrator],
   },
   {
     key: '/availability',
@@ -51,6 +51,12 @@ const menuConfig: MenuItem[] = [
     icon: <AppstoreOutlined />,
     label: 'Tipos de Serviço',
     allowedRoles: [Roles.Administrator],
+  },
+  {
+    key: '/agent/my-appointments',
+    icon: <UnorderedListOutlined />,
+    label: 'Seus Agendamentos',
+    allowedRoles: [Roles.Agent],
   },
   {
     key: '/client/new-appointment',

@@ -13,7 +13,7 @@ export function useClientMyAppointmentsController() {
   const [filters, setFilters] = useState<AppointmentFilters>({})
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
 
-  const { data: appointments = [], isLoading } = useAppointments(filters)
+  const { data: appointments = [], isLoading, refetch } = useAppointments(filters)
   const { data: serviceTypes = [] } = useServiceTypes()
   const cancelAppointment = useCancelAppointment()
 
@@ -49,6 +49,7 @@ export function useClientMyAppointmentsController() {
       label,
     })),
     serviceTypeOptions: serviceTypes.map((st) => ({ value: st.id, label: st.description })),
+    refetch,
     handleCancel,
   }
 }

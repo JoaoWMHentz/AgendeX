@@ -50,7 +50,7 @@ public sealed class CreateAppointmentCommandHandlerTests
             });
 
         appointmentRepository
-            .Setup(r => r.HasConflictAsync(agentId, date, time, null, It.IsAny<CancellationToken>()))
+            .Setup(r => r.HasConflictAsync(agentId, date, new TimeOnly(8, 0), new TimeOnly(12, 0), null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         appointmentRepository
@@ -145,7 +145,7 @@ public sealed class CreateAppointmentCommandHandlerTests
             });
 
         appointmentRepository
-            .Setup(r => r.HasConflictAsync(agentId, date, time, null, It.IsAny<CancellationToken>()))
+            .Setup(r => r.HasConflictAsync(agentId, date, new TimeOnly(9, 0), new TimeOnly(11, 0), null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         CreateAppointmentCommand command = new(

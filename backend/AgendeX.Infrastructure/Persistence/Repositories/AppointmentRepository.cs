@@ -43,13 +43,14 @@ public sealed class AppointmentRepository : IAppointmentRepository
     }
 
     public Task<bool> HasConflictAsync(
-        Guid agentId, DateOnly date, TimeOnly time, Guid? excludeId, CancellationToken cancellationToken)
+        Guid agentId, DateOnly date, TimeOnly windowStart, TimeOnly windowEnd, Guid? excludeId, CancellationToken cancellationToken)
     {
         return _dbContext.Appointments.AnyAsync(a =>
             a.AgentId == agentId &&
             a.Date == date &&
-            a.Time == time &&
-            a.Id != excludeId &&
+            a.Time >= windowStart &&
+            a.Time < windowEnd &&
+            (excludeId == null || a.Id != excludeId.Value) &&
             (a.Status == AppointmentStatus.Confirmed || a.Status == AppointmentStatus.PendingConfirmation),
             cancellationToken);
     }

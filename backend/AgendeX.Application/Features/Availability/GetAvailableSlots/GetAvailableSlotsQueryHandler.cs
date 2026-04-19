@@ -30,7 +30,7 @@ public sealed class GetAvailableSlotsQueryHandler
         HashSet<TimeOnly> occupiedTimes = await GetOccupiedTimesAsync(request.AgentId, request.Date, cancellationToken);
 
         return slots
-            .Where(s => s.IsActive && !occupiedTimes.Contains(s.StartTime))
+            .Where(s => s.IsActive && !occupiedTimes.Any(t => t >= s.StartTime && t < s.EndTime))
             .Select(s => new AvailableSlotDto(s.StartTime, s.EndTime))
             .ToList()
             .AsReadOnly();

@@ -1,9 +1,8 @@
 import dayjs from 'dayjs'
 import { Button, DatePicker, Select, Space, Table, Tag, Typography } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import type { ReactNode } from 'react'
 import {
-  AppointmentStatus,
   appointmentStatusColor,
   appointmentStatusLabel,
   type Appointment,
@@ -20,115 +19,42 @@ type Option = {
 }
 
 type AppointmentsListProps = {
-  isAdmin: boolean
-  isAgent: boolean
-  isClient: boolean
+  title?: string
   appointments: Appointment[]
   loading: boolean
   filters: AppointmentFilters
   statusOptions: Option[]
   serviceTypeOptions: Option[]
-  agentOptions: Option[]
+  agentOptions?: Option[]
+  showAgentFilter?: boolean
+  showAgentColumn?: boolean
   onFiltersChange: (filters: AppointmentFilters) => void
-  onConfirm: (id: string) => void
-  onOpenReject: (appointment: Appointment) => void
-  onCancel: (id: string) => void
-  onOpenComplete: (appointment: Appointment) => void
-  onOpenReassign: (appointment: Appointment) => void
-}
-
-function isFutureAppointment(appointment: Appointment) {
-  return dayjs(`${appointment.date}T${appointment.time}`).isAfter(dayjs())
+  onRowClick: (appointment: Appointment) => void
+  onRefresh?: () => void
 }
 
 export function AppointmentsList({
-  isAdmin,
-  isAgent,
-  isClient,
+  title = 'Agendamentos',
   appointments,
   loading,
   filters,
   statusOptions,
   serviceTypeOptions,
-  agentOptions,
+  agentOptions = [],
+  showAgentFilter = false,
+  showAgentColumn = true,
   onFiltersChange,
-  onConfirm,
-  onOpenReject,
-  onCancel,
-  onOpenComplete,
-  onOpenReassign,
+  onRowClick,
+  onRefresh,
 }: AppointmentsListProps) {
-  const renderActions = (record: Appointment) => {
-    const actions: ReactNode[] = []
-    const isFuture = isFutureAppointment(record)
-
-    if (isAgent) {
-      if (record.status === AppointmentStatus.PendingConfirmation) {
-        actions.push(
-          <Button key="confirm" size="small" type="primary" onClick={() => onConfirm(record.id)}>
-            Confirmar
-          </Button>,
-          <Button key="reject" size="small" danger onClick={() => onOpenReject(record)}>
-            Rejeitar
-          </Button>,
-        )
-      }
-
-      if (record.status === AppointmentStatus.Confirmed && !isFuture) {
-        actions.push(
-          <Button key="complete" size="small" onClick={() => onOpenComplete(record)}>
-            Concluir
-          </Button>,
-        )
-      }
-    }
-
-    if (isClient) {
-      const canCancel =
-        (record.status === AppointmentStatus.PendingConfirmation ||
-          record.status === AppointmentStatus.Confirmed) &&
-        isFuture
-
-      if (canCancel) {
-        actions.push(
-          <Button key="cancel" size="small" danger onClick={() => onCancel(record.id)}>
-            Cancelar
-          </Button>,
-        )
-      }
-    }
-
-    if (isAdmin) {
-      actions.push(
-        <Button key="reassign" size="small" onClick={() => onOpenReassign(record)}>
-          Reatribuir
-        </Button>,
-      )
-
-      if (
-        record.status === AppointmentStatus.PendingConfirmation ||
-        record.status === AppointmentStatus.Confirmed
-      ) {
-        actions.push(
-          <Button key="cancel" size="small" danger onClick={() => onCancel(record.id)}>
-            Cancelar
-          </Button>,
-        )
-      }
-    }
-
-    return <Space>{actions}</Space>
-  }
-
   const columns: ColumnsType<Appointment> = [
     { title: 'Título', dataIndex: 'title', ellipsis: true },
     { title: 'Cliente', dataIndex: 'clientName' },
-    { title: 'Agente', dataIndex: 'agentName' },
+    ...(showAgentColumn ? [{ title: 'Agente', dataIndex: 'agentName' } as const] : []),
     { title: 'Tipo', dataIndex: 'serviceTypeDescription' },
     {
       title: 'Data / Hora',
-      render: (_: unknown, appointment: Appointment) =>
-        `${appointment.date} ${appointment.time.slice(0, 5)}`,
+      render: (_: unknown, a: Appointment) => `${a.date} ${a.time.slice(0, 5)}`,
     },
     {
       title: 'Status',
@@ -139,14 +65,13 @@ export function AppointmentsList({
         </Tag>
       ),
     },
-    { title: 'Ações', render: (_: unknown, appointment: Appointment) => renderActions(appointment) },
   ]
 
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>
-          Agendamentos
+          {title}
         </Title>
       </div>
 
@@ -157,7 +82,9 @@ export function AppointmentsList({
           style={{ width: 160 }}
           value={filters.status}
           options={statusOptions}
-          onChange={(status) => onFiltersChange({ ...filters, status: status as AppointmentStatusValue })}
+          onChange={(status) =>
+            onFiltersChange({ ...filters, status: status as AppointmentStatusValue })
+          }
         />
 
         <Select
@@ -169,7 +96,7 @@ export function AppointmentsList({
           onChange={(serviceTypeId) => onFiltersChange({ ...filters, serviceTypeId })}
         />
 
-        {isAdmin && (
+        {showAgentFilter && (
           <Select
             allowClear
             placeholder="Agente"
@@ -181,14 +108,20 @@ export function AppointmentsList({
         )}
 
         <RangePicker
-          onChange={(dates) => {
+          onChange={(dates) =>
             onFiltersChange({
               ...filters,
               from: dates?.[0]?.format('YYYY-MM-DD'),
               to: dates?.[1]?.format('YYYY-MM-DD'),
             })
-          }}
+          }
         />
+
+        {onRefresh && (
+          <Button icon={<ReloadOutlined />} onClick={onRefresh}>
+            Atualizar
+          </Button>
+        )}
       </Space>
 
       <Table<Appointment>
@@ -197,6 +130,7 @@ export function AppointmentsList({
         rowKey="id"
         loading={loading}
         scroll={{ x: 900 }}
+        onRow={(record) => ({ onClick: () => onRowClick(record), style: { cursor: 'pointer' } })}
       />
     </>
   )

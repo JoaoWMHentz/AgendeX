@@ -28,8 +28,8 @@ public sealed class CreateAppointmentCommandHandler : IRequestHandler<CreateAppo
     {
         await EnsureAgentExistsAsync(request.AgentId, cancellationToken);
         await EnsureServiceTypeExistsAsync(request.ServiceTypeId, cancellationToken);
-        await EnsureTimeIsWithinAvailabilityAsync(request.AgentId, request.Date, request.Time, cancellationToken);
-        await EnsureNoConflictAsync(request.AgentId, request.Date, request.Time, cancellationToken);
+        AgentAvailability window = await GetAvailabilityWindowAsync(request.AgentId, request.Date, request.Time, cancellationToken);
+        await EnsureNoConflictAsync(request.AgentId, request.Date, window.StartTime, window.EndTime, cancellationToken);
 
         Appointment appointment = new(
             request.Title, request.Description, request.ServiceTypeId,
@@ -56,22 +56,24 @@ public sealed class CreateAppointmentCommandHandler : IRequestHandler<CreateAppo
             throw new KeyNotFoundException($"ServiceType '{serviceTypeId}' not found.");
     }
 
-    private async Task EnsureTimeIsWithinAvailabilityAsync(
+    private async Task<AgentAvailability> GetAvailabilityWindowAsync(
         Guid agentId, DateOnly date, TimeOnly time, CancellationToken cancellationToken)
     {
         WeekDay weekDay = (WeekDay)date.DayOfWeek;
         IReadOnlyList<AgentAvailability> slots =
             await _availabilityRepository.GetByAgentAndWeekDayAsync(agentId, weekDay, cancellationToken);
 
-        bool withinSlot = slots.Any(s => s.IsActive && time >= s.StartTime && time < s.EndTime);
-        if (!withinSlot)
+        AgentAvailability? window = slots.FirstOrDefault(s => s.IsActive && time >= s.StartTime && time < s.EndTime);
+        if (window is null)
             throw new InvalidOperationException("The selected time is not within any active availability window for this agent.");
+
+        return window;
     }
 
     private async Task EnsureNoConflictAsync(
-        Guid agentId, DateOnly date, TimeOnly time, CancellationToken cancellationToken)
+        Guid agentId, DateOnly date, TimeOnly windowStart, TimeOnly windowEnd, CancellationToken cancellationToken)
     {
-        bool hasConflict = await _appointmentRepository.HasConflictAsync(agentId, date, time, null, cancellationToken);
+        bool hasConflict = await _appointmentRepository.HasConflictAsync(agentId, date, windowStart, windowEnd, null, cancellationToken);
         if (hasConflict)
             throw new InvalidOperationException("The agent already has an appointment at this time.");
     }

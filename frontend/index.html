@@ -5,6 +5,24 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>frontend</title>
+    <script>
+      (function () {
+        const THEME_KEY = 'agendex-theme-preference'
+        const storedPref = localStorage.getItem(THEME_KEY)
+        let theme = 'light'
+
+        if (storedPref === 'dark') {
+          theme = 'dark'
+        } else if (storedPref === 'system' || !storedPref) {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        }
+
+        document.documentElement.style.colorScheme = theme
+        if (theme === 'dark') {
+          document.documentElement.setAttribute('style', 'color-scheme: dark')
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

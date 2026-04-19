@@ -95,7 +95,7 @@ export function AppLayout() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider theme={resolvedTheme} breakpoint="lg" collapsedWidth={0}>
+      <Sider className="app-liquid-sider" theme={resolvedTheme} breakpoint="lg" collapsedWidth={0}>
         <Title
           level={4}
           style={{ color: resolvedTheme === 'dark' ? token.colorTextLightSolid : token.colorText, textAlign: 'center', padding: '20px 0 16px', margin: 0 }}

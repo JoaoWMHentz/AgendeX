@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { User, CreateUserRequest, UpdateUserRequest, SetClientDetailRequest, UserRoleValue } from '@/features/users/types'
+import type { User, CreateUserRequest, UpdateUserRequest, SetClientDetailRequest, UserRoleValue } from '@/features/users/models/types'
 
 export const usersService = {
   getAll: (role?: UserRoleValue) =>

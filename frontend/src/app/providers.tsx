@@ -14,6 +14,11 @@ export function Providers() {
 
   useEffect(() => {
     document.documentElement.style.colorScheme = resolvedTheme
+    if (resolvedTheme === 'dark') {
+      document.documentElement.setAttribute('style', 'color-scheme: dark')
+    } else {
+      document.documentElement.removeAttribute('style')
+    }
   }, [resolvedTheme])
 
   return (

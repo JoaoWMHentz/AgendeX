@@ -43,8 +43,13 @@ prova-dotnet-react-senior-01064-2026/
 │   ├── AgendeX.WebAPI/              # Controllers, Swagger, middlewares, Program.cs
 │   ├── AgendeX.Tests/               # Unit tests (xUnit + Moq)
 │   └── scripts/                     # Utility scripts (seed, etc.)
-├── frontend/                        # React app (not yet started)
-├── docker-compose.yml               # PostgreSQL 16 only (app containers pending)
+├── frontend/                        # React app (Vite + TypeScript + Ant Design)
+│   └── src/
+│       ├── app/                     # Providers, router, theme, app bootstrap
+│       ├── features/                # Feature-based modules (auth, users, appointments, ...)
+│       ├── services/                # API client and service adapters
+│       └── shared/                  # Reusable UI, constants, utils, query keys
+├── docker-compose.yml               # Local orchestration
 └── README.md
 ```
 
@@ -375,6 +380,41 @@ Infrastructure → Domain + Application
 │   └── scripts/
 │       └── seed-auth-user.sql
 ├── frontend/
+│   └── src/
+│       ├── app/
+│       ├── services/
+│       ├── shared/
+│       └── features/
+│           ├── auth/
+│           │   ├── pages/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   └── types/
+│           ├── users/
+│           │   ├── pages/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   └── types/
+│           ├── appointments/
+│           │   ├── pages/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   └── types/
+│           ├── availability/
+│           │   ├── pages/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   └── types/
+│           ├── service-types/
+│           │   ├── pages/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   └── types/
+│           └── reports/
+│               ├── pages/
+│               ├── components/
+│               ├── hooks/
+│               └── types/
 └── README.md
 ```
 
@@ -460,6 +500,8 @@ Infrastructure → Domain + Application
 - React Query for cache and loading/error states
 - Zod for form validation
 - Never use `any` — always type everything
+- Organize by feature using the pattern: `pages` (composition), `components` (presentational), `hooks` (state and business flow), `types` (feature contracts)
+- Keep pages thin: pages should orchestrate composition and delegate behavior to hooks/components
 
 ## Frontend Plan (Ant Design)
 
@@ -474,15 +516,71 @@ Infrastructure → Domain + Application
 - Routing: React Router DOM with role-based route guards
 
 ### Folder Organization (frontend/src)
-- app (providers, router, bootstrap)
-- shared (common ui wrappers, utils, constants, types)
-- services (api client, auth/token management, endpoint helpers)
-- features/auth
-- features/users
-- features/appointments
-- features/availability
-- features/service-types
-- features/reports (initial scaffold only in first delivery)
+- app (providers, router, bootstrap, theme)
+- shared (common ui wrappers, utils, constants, query keys)
+- services (api client, auth/token management, endpoint services)
+- features (feature-first modules)
+
+### Frontend Feature Pattern
+- Each feature should follow this baseline structure:
+  - `pages/`: route-level components and composition only
+  - `components/`: reusable local UI components for the feature
+  - `hooks/`: React Query hooks and page controllers/use-cases
+  - `types/`: feature-specific types, enums, and DTO contracts
+
+Reference (already applied in users):
+
+```
+frontend/src/features/users/
+├── pages/
+│   ├── UsersPage.tsx
+│   └── ProfilePage.tsx
+├── components/
+│   ├── UsersList.tsx
+│   ├── CreateUserModal.tsx
+│   └── EditUserModal.tsx
+├── hooks/
+│   ├── useUsers.ts
+│   └── useUsersPageController.ts
+└── types/
+    └── types.ts
+```
+
+### Organization for Other Frontend Modules
+
+```
+frontend/src/features/
+├── auth/
+│   ├── pages/
+│   ├── components/
+│   ├── hooks/
+│   └── types/
+├── appointments/
+│   ├── pages/
+│   ├── components/
+│   ├── hooks/
+│   └── types/
+├── availability/
+│   ├── pages/
+│   ├── components/
+│   ├── hooks/
+│   └── types/
+├── service-types/
+│   ├── pages/
+│   ├── components/
+│   ├── hooks/
+│   └── types/
+└── reports/
+    ├── pages/
+    ├── components/
+    ├── hooks/
+    └── types/
+```
+
+Notes:
+- `hooks/` may include both API hooks (React Query) and page controller hooks.
+- Feature logic must stay inside its own feature folder; only truly shared code goes to `shared/`.
+- Keep `services/` as API adapters; avoid putting UI state or feature orchestration there.
 
 ### Delivery Phases
 1. Foundation

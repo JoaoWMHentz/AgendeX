@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { usersService } from '@/services/users.service'
 import { queryKeys } from '@/shared/queryKeys'
 import { useAuthStore } from '@/features/auth/authStore'
-import type { UserRoleValue } from './types'
+import type { UserRoleValue } from '../models/types'
 
 export function useUsers(role?: UserRoleValue) {
   return useQuery({

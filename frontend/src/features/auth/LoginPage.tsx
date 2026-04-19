@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Form, Input, Button, Card, Typography, Alert, Space } from 'antd'
+import { Form, Input, Button, Card, Typography, Alert, Space, theme as antdTheme } from 'antd'
 import { MailOutlined, LockOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { authService } from '@/services/auth.service'
@@ -23,6 +23,7 @@ export function LoginPage() {
   const location = useLocation()
   const setSession = useAuthStore((s) => s.setSession)
   const [apiError, setApiError] = useState<string | null>(null)
+  const { token } = antdTheme.useToken()
 
   const from = (location.state as { from?: string } | null)?.from ?? '/'
 
@@ -60,12 +61,20 @@ export function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#ebebeb',
+        padding: 20,
       }}
     >
-      <Card style={{ width: 400, boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+      <Card
+        style={{
+          width: 420,
+          borderRadius: token.borderRadiusLG,
+          background: token.colorBgContainer,
+          border: `1px solid ${token.colorBorder}`,
+          boxShadow: token.boxShadowSecondary,
+        }}
+      >
         <Space direction="vertical" size={8} style={{ width: '100%', marginBottom: 28, textAlign: 'center' }}>
-          <Title level={3} style={{ margin: 0 }}>
+          <Title level={3} style={{ margin: 0, color: token.colorPrimary }}>
             AgendeX
           </Title>
           <Text type="secondary">Faça login para continuar</Text>

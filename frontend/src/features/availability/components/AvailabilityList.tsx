@@ -1,4 +1,4 @@
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { weekDayLabel, type Availability } from '../types'
@@ -21,6 +21,7 @@ type AvailabilityListProps = {
   onAgentChange: (agentId?: string) => void
   onWeekDayChange: (weekDay?: number) => void
   onOpenCreate: () => void
+  onRefresh: () => void
   onEdit: (availability: Availability) => void
   onDelete: (id: string) => void
 }
@@ -40,6 +41,7 @@ export function AvailabilityList({
   onAgentChange,
   onWeekDayChange,
   onOpenCreate,
+  onRefresh,
   onEdit,
   onDelete,
 }: AvailabilityListProps) {
@@ -115,6 +117,14 @@ export function AvailabilityList({
             options={weekDayFilterOptions}
             value={selectedWeekDay}
             onChange={onWeekDayChange}
+            allowClear
+          />
+          <Button icon={<ReloadOutlined />} onClick={onRefresh}>
+            Atualizar
+          </Button>
+          <Select
+            placeholder="Dia da semana REMOVE"
+            style={{ display: 'none' }}
             allowClear
           />
         </Space>

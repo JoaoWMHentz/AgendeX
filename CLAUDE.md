@@ -7,22 +7,22 @@ Web system for managing service appointments between clients and agents/speciali
 ## Stack
 
 ### Backend
-- .NET 10 — ASP.NET Core Web API
-- Clean Architecture (Domain / Application / Infrastructure / WebAPI)
-- CQRS with MediatR 12.5
-- Entity Framework Core 9 + Npgsql (PostgreSQL 16)
+   ├── .claude/
+   │   └── settings.local.json
+   ├── .github/
+   │   └── copilot-instructions.md
 - FluentValidation 12.1
 - JWT RS256 (Microsoft.IdentityModel.Tokens 8.14)
 - Swagger via Swashbuckle.AspNetCore 10
 - AspNetCoreRateLimit 5.0
 - BCrypt.Net-Next 4.0 (work factor 12)
-- xUnit + Moq + FluentAssertions + EF InMemory (tests)
-
-### Frontend
-- React 18 + TypeScript + Vite
 - React Router DOM
 - React Query (TanStack Query)
 - React Hook Form + Zod
+├── .claude/
+│   └── settings.local.json
+├── .github/
+│   └── copilot-instructions.md
 - Axios
 - Ant Design (UI library)
 - Zustand
@@ -34,19 +34,21 @@ Web system for managing service appointments between clients and agents/speciali
 ## Folder Structure
 
 ```
-prova-dotnet-react-senior-01064-2026/
+prova-dotnet-react-senior-01064-2026-096.688.359-48/
+├── .claude/
+├── .github/
 ├── backend/
 │   ├── AgendeX.slnx
 │   ├── AgendeX.Domain/              # Entities, enums, interfaces
 │   ├── AgendeX.Application/         # Features (Commands/Queries) + Common (Behaviors/Interfaces)
 │   ├── AgendeX.Infrastructure/      # Persistence (EF/repositories/migrations), Services, Identity
-│   ├── AgendeX.WebAPI/              # Controllers, Swagger, middlewares, Program.cs
+│   ├── AgendeX.WebAPI/              # Controllers, Swagger, middlewares, serialization, Program.cs
 │   ├── AgendeX.Tests/               # Unit tests (xUnit + Moq)
 │   └── scripts/                     # Utility scripts (seed, etc.)
 ├── frontend/                        # React app (Vite + TypeScript + Ant Design)
 │   └── src/
 │       ├── app/                     # Providers, router, theme, app bootstrap
-│       ├── features/                # Feature-based modules (auth, users, appointments, ...)
+│       ├── features/                # Feature-based modules (auth, users, appointments, availability, service-types)
 │       ├── services/                # API client and service adapters
 │       └── shared/                  # Reusable UI, constants, utils, query keys
 ├── docker-compose.yml               # Local orchestration
@@ -103,6 +105,8 @@ Appointment
   - RejectionReason (string?)
   - ServiceSummary (string?)
   - CreatedAt (DateTime)
+  │   │   │   │   ├── 20260417235513_InitialCreate.Designer.cs
+  │   │   │   │   ├── 20260418172619_AddAvailabilityAndAppointments.Designer.cs
   - ConfirmedAt (DateTime?)
   - CanceledAt (DateTime?)
   - Notes (string?)
@@ -152,42 +156,70 @@ Confirmed
   → Canceled        (action: Client [only if it has not occurred yet] or Administrator)
   → Completed       (action: Agent [only if appointment date/time has been reached])
 ```
+│   │   │   │   ├── 20260417235513_InitialCreate.Designer.cs
 
-### Client Cancellation
-- Only when status is `PendingConfirmation` or `Confirmed`
-- Only if the appointment date/time has not occurred yet
-
-### Appointment Creation
-- Date cannot be before the current date
-- Time must be within an agent availability window
-- There cannot be a conflict with another `Confirmed` or `PendingConfirmation` appointment for the same agent at the same time
-
-### Availability
-- EndTime > StartTime (required)
-- Intervals cannot overlap for the same agent and weekday
-- When querying available slots: subtract occupied slots from active appointments
-
-## Non-Functional Requirements
-
-- **NFR1** — Backend in C#/.NET 8+, PostgreSQL or SQL Server database, frontend with React + TypeScript
-- **NFR2** — Frontend and backend in separate Docker containers
-- **NFR3** — Minimum 70% unit test coverage in business rule classes, with no failing tests
-- **NFR4** — Every route protected by JWT; role-based access control
-- **NFR5** — Semantic HTTP responses: 200, 201, 400, 401, 403, 404, 500
-- **NFR6** — Frontend shows user-friendly error messages for all API errors
-- **NFR7** — Database structure via EF Core Migrations (no manual SQL)
-- **NFR8** — Fields marked with (*) are required — validate on frontend and backend
-- **NFR9** — Complete Swagger with request/response examples on all endpoints
-- **NFR10** — Technical documentation with architecture diagrams, design decisions, and setup guide
-- **NFR11** — Microservices are optional (not prioritized in the current timeline)
-
-## Functional Modules
-
-### FR1 — Users
-- 1.1 Listing (filtered by role) — Admin only
-- 1.2 Creation (Admin only) — `POST /api/users` with `{name, email, password, role}`
-- 1.3 Set client detail — `PUT /api/users/{id}/client-detail` — validates user is Client role
-- 1.4 Editing name — `PUT /api/users/{id}` with `{name}`
+│   │   │   │   ├── 20260418172619_AddAvailabilityAndAppointments.Designer.cs
+│   ├── .env
+│   ├── .env.example
+│   ├── package-lock.json
+│   ├── package.json
+│   └── src/
+│       ├── app/
+│       │   ├── AppLayout.tsx
+│       │   ├── ProtectedRoute.tsx
+│       │   ├── providers.tsx
+│       │   ├── queryClient.ts
+│       │   ├── router.tsx
+│       │   ├── theme.ts
+│       │   └── themes/
+│       ├── services/
+│       │   ├── api.ts
+│       │   ├── appointments.service.ts
+│       │   ├── auth.service.ts
+│       │   ├── availability.service.ts
+│       │   ├── service-types.service.ts
+│       │   ├── tokenStorage.ts
+│       │   └── users.service.ts
+│       ├── shared/
+│       │   ├── components/
+│       │   │   ├── DatePickerField.tsx
+│       │   │   ├── FormModal.tsx
+│       │   │   └── TimePickerField.tsx
+│       │   ├── constants/
+│       │   │   └── roles.ts
+│       │   ├── queryKeys.ts
+│       │   ├── types/
+│       │   │   └── index.ts
+│       │   └── utils/
+│       │       ├── apiError.ts
+│       │       └── masks.ts
+│       └── features/
+│           ├── auth/
+│           │   ├── authStore.ts
+│           │   ├── jwtUtils.ts
+│           │   ├── LoginPage.tsx
+│           │   └── types.ts
+│           ├── users/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   ├── models/
+│           │   └── pages/
+│           ├── appointments/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   ├── pages/
+│           │   ├── types.ts
+│           │   └── useAppointments.ts
+│           ├── availability/
+│           │   ├── components/
+│           │   ├── hooks/
+│           │   ├── pages/
+│           │   ├── types.ts
+│           │   └── useAvailability.ts
+│           └── service-types/
+│               ├── ServiceTypesPage.tsx
+│               ├── types.ts
+│               └── useServiceTypes.ts
 
 ### FR2 — Appointments
 - 2.1 Creation (Client only)
@@ -240,6 +272,10 @@ Infrastructure → Domain + Application
 
 ```
 .
+├── .claude/
+│   └── settings.local.json
+├── .github/
+│   └── copilot-instructions.md
 ├── backend/
 │   ├── AgendeX.slnx
 │   ├── AgendeX.Application/
@@ -321,7 +357,9 @@ Infrastructure → Domain + Application
 │   │   │   │   └── UserConfiguration.cs
 │   │   │   ├── Migrations/
 │   │   │   │   ├── 20260417235513_InitialCreate.cs
+│   │   │   │   ├── 20260417235513_InitialCreate.Designer.cs
 │   │   │   │   ├── 20260418172619_AddAvailabilityAndAppointments.cs
+│   │   │   │   ├── 20260418172619_AddAvailabilityAndAppointments.Designer.cs
 │   │   │   │   └── ApplicationDbContextModelSnapshot.cs
 │   │   │   └── Repositories/
 │   │   │       ├── AgentAvailabilityRepository.cs
@@ -370,6 +408,8 @@ Infrastructure → Domain + Application
 │   │   │   ├── SecurityHeadersMiddleware.cs
 │   │   │   └── SwaggerExamplesOperationFilter.cs
 │   │   ├── Properties/
+│   │   ├── Serialization/
+│   │   │   └── TimeOnlyMinutesJsonConverter.cs
 │   │   ├── Services/
 │   │   │   └── CurrentUserService.cs
 │   │   ├── appsettings.json
@@ -380,41 +420,67 @@ Infrastructure → Domain + Application
 │   └── scripts/
 │       └── seed-auth-user.sql
 ├── frontend/
+│   ├── .env
+│   ├── .env.example
+│   ├── package-lock.json
+│   ├── package.json
 │   └── src/
 │       ├── app/
+│       │   ├── AppLayout.tsx
+│       │   ├── ProtectedRoute.tsx
+│       │   ├── providers.tsx
+│       │   ├── queryClient.ts
+│       │   ├── router.tsx
+│       │   ├── theme.ts
+│       │   └── themes/
 │       ├── services/
+│       │   ├── api.ts
+│       │   ├── appointments.service.ts
+│       │   ├── auth.service.ts
+│       │   ├── availability.service.ts
+│       │   ├── service-types.service.ts
+│       │   ├── tokenStorage.ts
+│       │   └── users.service.ts
 │       ├── shared/
+│       │   ├── components/
+│       │   │   ├── DatePickerField.tsx
+│       │   │   ├── FormModal.tsx
+│       │   │   └── TimePickerField.tsx
+│       │   ├── constants/
+│       │   │   └── roles.ts
+│       │   ├── queryKeys.ts
+│       │   ├── types/
+│       │   │   └── index.ts
+│       │   └── utils/
+│       │       ├── apiError.ts
+│       │       └── masks.ts
 │       └── features/
 │           ├── auth/
-│           │   ├── pages/
-│           │   ├── components/
-│           │   ├── hooks/
-│           │   └── types/
+│           │   ├── authStore.ts
+│           │   ├── jwtUtils.ts
+│           │   ├── LoginPage.tsx
+│           │   └── types.ts
 │           ├── users/
-│           │   ├── pages/
 │           │   ├── components/
 │           │   ├── hooks/
-│           │   └── types/
+│           │   ├── models/
+│           │   └── pages/
 │           ├── appointments/
-│           │   ├── pages/
 │           │   ├── components/
 │           │   ├── hooks/
-│           │   └── types/
+│           │   ├── pages/
+│           │   ├── types.ts
+│           │   └── useAppointments.ts
 │           ├── availability/
-│           │   ├── pages/
 │           │   ├── components/
 │           │   ├── hooks/
-│           │   └── types/
-│           ├── service-types/
 │           │   ├── pages/
-│           │   ├── components/
-│           │   ├── hooks/
-│           │   └── types/
-│           └── reports/
-│               ├── pages/
-│               ├── components/
-│               ├── hooks/
-│               └── types/
+│           │   ├── types.ts
+│           │   └── useAvailability.ts
+│           └── service-types/
+│               ├── ServiceTypesPage.tsx
+│               ├── types.ts
+│               └── useServiceTypes.ts
 └── README.md
 ```
 
@@ -528,10 +594,12 @@ Infrastructure → Domain + Application
   - `hooks/`: React Query hooks and page controllers/use-cases
   - `types/`: feature-specific types, enums, and DTO contracts
 
-Reference (already applied in users):
+Reference (current users module):
 
 ```
 frontend/src/features/users/
+├── models/
+│   └── types.ts
 ├── pages/
 │   ├── UsersPage.tsx
 │   └── ProfilePage.tsx
@@ -542,8 +610,6 @@ frontend/src/features/users/
 ├── hooks/
 │   ├── useUsers.ts
 │   └── useUsersPageController.ts
-└── types/
-    └── types.ts
 ```
 
 ### Organization for Other Frontend Modules
@@ -551,30 +617,31 @@ frontend/src/features/users/
 ```
 frontend/src/features/
 ├── auth/
-│   ├── pages/
-│   ├── components/
-│   ├── hooks/
-│   └── types/
+│   ├── authStore.ts
+│   ├── jwtUtils.ts
+│   ├── LoginPage.tsx
+│   └── types.ts
 ├── appointments/
 │   ├── pages/
 │   ├── components/
 │   ├── hooks/
-│   └── types/
+│   ├── types.ts
+│   └── useAppointments.ts
 ├── availability/
 │   ├── pages/
 │   ├── components/
 │   ├── hooks/
-│   └── types/
+│   ├── types.ts
+│   └── useAvailability.ts
 ├── service-types/
-│   ├── pages/
-│   ├── components/
-│   ├── hooks/
-│   └── types/
-└── reports/
+│   ├── ServiceTypesPage.tsx
+│   ├── types.ts
+│   └── useServiceTypes.ts
+└── users/
     ├── pages/
     ├── components/
     ├── hooks/
-    └── types/
+    └── models/
 ```
 
 Notes:
@@ -638,14 +705,18 @@ Notes:
 - Service Types: list — fully functional
 - Availability (Admin): list by agent, create, edit, delete windows — fully functional
 - Appointments (Admin/Agent): list with filters, confirm, reject, complete, reassign, cancel
+- Agent flow: dedicated page `/agent/my-appointments` with role-based menu and scoped actions
 - Client flow: dedicated pages with role-based menu
   - `/client/new-appointment` — form (title, description, service type, date) + slots table per agent + confirm modal
   - `/client/my-appointments` — own appointments with cancel action
-- Role-based routing: Admin+Agent → /appointments + /availability; Client → /client/*
+- Role-based routing:
+  - Admin → `/appointments`, `/users`, `/service-types`
+  - Admin+Agent → `/availability`
+  - Agent → `/agent/my-appointments`
+  - Client → `/client/*`
 - Shared components: FormModal, DatePickerField, TimePickerField
 
 ### Pending
-- [ ] Agent flow — dedicated view or adaptations (if needed)
 - [ ] Dockerfile do frontend e atualização do docker-compose para orquestrar a aplicação
 - [ ] Reports module (FR4) — queries + CSV/XLSX export
 - [ ] README e diagramas de arquitetura (Mermaid)

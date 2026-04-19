@@ -24,6 +24,7 @@ public sealed class CreateAvailabilityCommandHandler
             request.WeekDays,
             request.StartTime,
             request.EndTime,
+            request.SlotDurationMinutes,
             cancellationToken);
     }
 }

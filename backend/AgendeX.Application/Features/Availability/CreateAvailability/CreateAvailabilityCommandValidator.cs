@@ -22,5 +22,15 @@ public sealed class CreateAvailabilityCommandValidator : AbstractValidator<Creat
 
         RuleFor(c => c.EndTime).GreaterThan(c => c.StartTime)
             .WithMessage("EndTime must be after StartTime.");
+
+        RuleFor(c => c.SlotDurationMinutes)
+            .Must(d => d is null or 30 or 60)
+            .WithMessage("SlotDurationMinutes must be 30 or 60.");
+
+        RuleFor(c => c)
+            .Must(c => c.SlotDurationMinutes is null ||
+                (int)(c.EndTime - c.StartTime).TotalMinutes % c.SlotDurationMinutes.Value == 0)
+            .When(c => c.SlotDurationMinutes.HasValue && c.EndTime > c.StartTime)
+            .WithMessage("The time range must be exactly divisible by the slot duration.");
     }
 }

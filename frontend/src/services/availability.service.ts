@@ -7,8 +7,12 @@ import type {
 } from '@/features/availability/types'
 
 export const availabilityService = {
-  getByAgent: (agentId: string) =>
-    api.get<Availability[]>(`/api/availability/agent/${agentId}`).then((r) => r.data),
+  getByAgent: (agentId: string, weekDay?: number) =>
+    api
+      .get<Availability[]>(`/api/availability/agent/${agentId}`, {
+        params: weekDay !== undefined ? { weekDay } : undefined,
+      })
+      .then((r) => r.data),
 
   getSlots: (agentId: string, date: string) =>
     api

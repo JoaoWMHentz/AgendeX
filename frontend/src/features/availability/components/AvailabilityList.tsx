@@ -17,11 +17,17 @@ type AvailabilityListProps = {
   loading: boolean
   selectedAgent?: string
   agentOptions: AgentOption[]
+  selectedWeekDay?: number
   onAgentChange: (agentId?: string) => void
+  onWeekDayChange: (weekDay?: number) => void
   onOpenCreate: () => void
   onEdit: (availability: Availability) => void
   onDelete: (id: string) => void
 }
+
+const weekDayFilterOptions = Object.entries(weekDayLabel)
+  .filter(([v]) => Number(v) >= 1 && Number(v) <= 5)
+  .map(([value, label]) => ({ value: Number(value), label }))
 
 export function AvailabilityList({
   isAdmin,
@@ -30,7 +36,9 @@ export function AvailabilityList({
   loading,
   selectedAgent,
   agentOptions,
+  selectedWeekDay,
   onAgentChange,
+  onWeekDayChange,
   onOpenCreate,
   onEdit,
   onDelete,
@@ -89,17 +97,27 @@ export function AvailabilityList({
         )}
       </div>
 
-      {isAdmin && (
-        <div style={{ marginBottom: 16 }}>
+      {(isAdmin || isAgent) && (
+        <Space style={{ marginBottom: 16 }}>
+          {isAdmin && (
+            <Select
+              placeholder="Selecione um agente"
+              style={{ width: 220 }}
+              options={agentOptions}
+              value={selectedAgent}
+              onChange={onAgentChange}
+              allowClear
+            />
+          )}
           <Select
-            placeholder="Selecione um agente"
-            style={{ width: 240 }}
-            options={agentOptions}
-            value={selectedAgent}
-            onChange={onAgentChange}
+            placeholder="Dia da semana"
+            style={{ width: 160 }}
+            options={weekDayFilterOptions}
+            value={selectedWeekDay}
+            onChange={onWeekDayChange}
             allowClear
           />
-        </div>
+        </Space>
       )}
 
       <Table<Availability>

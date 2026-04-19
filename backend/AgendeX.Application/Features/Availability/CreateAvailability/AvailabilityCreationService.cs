@@ -22,25 +22,50 @@ internal sealed class AvailabilityCreationService
         IReadOnlyList<WeekDay> weekDays,
         TimeOnly startTime,
         TimeOnly endTime,
+        int? slotDurationMinutes,
         CancellationToken cancellationToken)
     {
         await EnsureAgentExistsAsync(agentId, cancellationToken);
 
+        List<(TimeOnly Start, TimeOnly End)> slots = BuildSlots(startTime, endTime, slotDurationMinutes);
         List<WeekDay> distinctWeekDays = weekDays.Distinct().ToList();
         List<AgentAvailability> createdAvailabilities = [];
 
         foreach (WeekDay weekDay in distinctWeekDays)
         {
-            await EnsureNoOverlapAsync(agentId, weekDay, startTime, endTime, cancellationToken);
+            foreach ((TimeOnly slotStart, TimeOnly slotEnd) in slots)
+            {
+                await EnsureNoOverlapAsync(agentId, weekDay, slotStart, slotEnd, cancellationToken);
 
-            AgentAvailability availability = new(agentId, weekDay, startTime, endTime);
-            createdAvailabilities.Add(availability);
-            await _repository.AddAsync(availability, cancellationToken);
+                AgentAvailability availability = new(agentId, weekDay, slotStart, slotEnd);
+                createdAvailabilities.Add(availability);
+                await _repository.AddAsync(availability, cancellationToken);
+            }
         }
 
         await _repository.SaveChangesAsync(cancellationToken);
 
         return createdAvailabilities.Select(ToDto).ToList().AsReadOnly();
+    }
+
+    private static List<(TimeOnly Start, TimeOnly End)> BuildSlots(
+        TimeOnly startTime, TimeOnly endTime, int? slotDurationMinutes)
+    {
+        if (slotDurationMinutes is null)
+            return [(startTime, endTime)];
+
+        List<(TimeOnly, TimeOnly)> slots = [];
+        TimeOnly current = startTime;
+
+        while (current < endTime)
+        {
+            TimeOnly next = current.AddMinutes(slotDurationMinutes.Value);
+            if (next > endTime) break;
+            slots.Add((current, next));
+            current = next;
+        }
+
+        return slots;
     }
 
     private async Task EnsureAgentExistsAsync(Guid agentId, CancellationToken cancellationToken)

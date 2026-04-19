@@ -9,7 +9,7 @@ export const queryKeys = {
     agents: ['users', 'agents'] as const,
   },
   availability: {
-    byAgent: (agentId: string) => ['availability', agentId] as const,
+    byAgent: (agentId: string, weekDay?: number) => ['availability', agentId, { weekDay }] as const,
     slots: (agentId: string, date: string) => ['availability', 'slots', agentId, date] as const,
   },
   appointments: {

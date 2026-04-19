@@ -39,6 +39,7 @@ export interface CreateAvailabilityRequest {
   weekDays: WeekDayValue[]
   startTime: string
   endTime: string
+  slotDurationMinutes?: number
 }
 
 export interface UpdateAvailabilityRequest {

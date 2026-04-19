@@ -14,7 +14,8 @@ public sealed class AvailabilityValidatorsTests
             Guid.NewGuid(),
             new[] { WeekDay.Wednesday },
             new TimeOnly(11, 0),
-            new TimeOnly(10, 0));
+            new TimeOnly(10, 0),
+            null);
 
         FluentValidation.Results.ValidationResult result = validator.Validate(command);
 
@@ -30,7 +31,8 @@ public sealed class AvailabilityValidatorsTests
             Guid.NewGuid(),
             new[] { WeekDay.Sunday },
             new TimeOnly(9, 0),
-            new TimeOnly(10, 0));
+            new TimeOnly(10, 0),
+            null);
 
         FluentValidation.Results.ValidationResult result = validator.Validate(command);
 

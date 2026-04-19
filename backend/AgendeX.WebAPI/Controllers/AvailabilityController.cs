@@ -20,10 +20,11 @@ public sealed class AvailabilityController : ControllerBase
 
     [HttpGet("agent/{agentId:guid}")]
     [ProducesResponseType(typeof(IReadOnlyList<AvailabilityDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetByAgent(Guid agentId, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetByAgent(
+        Guid agentId, [FromQuery] WeekDay? weekDay, CancellationToken cancellationToken)
     {
         IReadOnlyList<AvailabilityDto> slots =
-            await _sender.Send(new GetAvailabilitiesByAgentQuery(agentId), cancellationToken);
+            await _sender.Send(new GetAvailabilitiesByAgentQuery(agentId, weekDay), cancellationToken);
         return Ok(slots);
     }
 

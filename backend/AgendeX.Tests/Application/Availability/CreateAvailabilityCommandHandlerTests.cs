@@ -20,7 +20,8 @@ public sealed class CreateAvailabilityCommandHandlerTests
             agentId,
             new[] { WeekDay.Monday, WeekDay.Wednesday },
             new TimeOnly(8, 0),
-            new TimeOnly(12, 0));
+            new TimeOnly(12, 0),
+            null);
 
         userRepository
             .Setup(r => r.GetByIdAsync(agentId, It.IsAny<CancellationToken>()))
@@ -61,7 +62,8 @@ public sealed class CreateAvailabilityCommandHandlerTests
                 agentId,
                 new[] { WeekDay.Tuesday },
                 new TimeOnly(9, 0),
-                new TimeOnly(11, 0)),
+                new TimeOnly(11, 0),
+                null),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<KeyNotFoundException>()
@@ -94,10 +96,45 @@ public sealed class CreateAvailabilityCommandHandlerTests
                 agentId,
                 new[] { WeekDay.Monday },
                 new TimeOnly(11, 0),
-                new TimeOnly(13, 0)),
+                new TimeOnly(13, 0),
+                null),
             CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Conflito de disponibilidade na segunda-feira*");
+    }
+
+    [Fact]
+    public async Task Handle_WithSlotDuration_SplitsIntoMultipleAvailabilities()
+    {
+        Mock<IAgentAvailabilityRepository> repository = new();
+        Mock<IUserRepository> userRepository = new();
+
+        Guid agentId = Guid.NewGuid();
+        CreateAvailabilityCommand command = new(
+            agentId,
+            [WeekDay.Monday],
+            new TimeOnly(8, 0),
+            new TimeOnly(10, 0),
+            60);
+
+        userRepository
+            .Setup(r => r.GetByIdAsync(agentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new User("Agent", "agent@email.com", "hash", UserRole.Agent));
+
+        repository
+            .Setup(r => r.GetByAgentAndWeekDayAsync(agentId, WeekDay.Monday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<AgentAvailability>());
+
+        CreateAvailabilityCommandHandler handler = new(repository.Object, userRepository.Object);
+
+        IReadOnlyList<AvailabilityDto> result = await handler.Handle(command, CancellationToken.None);
+
+        result.Should().HaveCount(2);
+        result[0].StartTime.Should().Be(new TimeOnly(8, 0));
+        result[0].EndTime.Should().Be(new TimeOnly(9, 0));
+        result[1].StartTime.Should().Be(new TimeOnly(9, 0));
+        result[1].EndTime.Should().Be(new TimeOnly(10, 0));
+        repository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

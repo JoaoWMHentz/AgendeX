@@ -18,17 +18,35 @@ const weekDaySchema = z.union([
   z.literal(WeekDay.Saturday),
 ])
 
-const createAvailabilitySchema = z.object({
-  agentId: z.string().uuid('Selecione um agente'),
-  weekDays: z
-    .array(weekDaySchema)
-    .min(1, 'Selecione ao menos um dia')
-    .refine((days) => days.every((day) => day >= WeekDay.Monday && day <= WeekDay.Friday), {
-      message: 'Selecione apenas dias entre segunda e sexta',
-    }),
-  startTime: z.string().regex(timeRegex, 'Formato HH:mm'),
-  endTime: z.string().regex(timeRegex, 'Formato HH:mm'),
-})
+
+const createAvailabilitySchema = z
+  .object({
+    agentId: z.string().uuid('Selecione um agente'),
+    weekDays: z
+      .array(weekDaySchema)
+      .min(1, 'Selecione ao menos um dia')
+      .refine((days) => days.every((day) => day >= WeekDay.Monday && day <= WeekDay.Friday), {
+        message: 'Selecione apenas dias entre segunda e sexta',
+      }),
+    startTime: z.string().regex(timeRegex, 'Formato HH:mm'),
+    endTime: z.string().regex(timeRegex, 'Formato HH:mm'),
+    slotDurationMinutes: z.union([z.literal(30), z.literal(60)]).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.slotDurationMinutes || !data.startTime || !data.endTime) return
+    const [sh, sm] = data.startTime.split(':').map(Number)
+    const [eh, em] = data.endTime.split(':').map(Number)
+    const totalMinutes = (eh * 60 + em) - (sh * 60 + sm)
+    if (totalMinutes > 0 && totalMinutes % data.slotDurationMinutes !== 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['slotDurationMinutes'],
+        message: data.slotDurationMinutes === 60
+          ? 'Com slots de 1 hora, o período deve começar e terminar em horas cheias (ex: 08:00 → 10:00)'
+          : 'Com slots de 30 min, o período deve começar e terminar em hora cheia ou meia hora (ex: 08:00 → 09:30)',
+      })
+    }
+  })
 
 export type CreateAvailabilityFormValues = z.infer<typeof createAvailabilitySchema>
 
@@ -133,6 +151,29 @@ export function CreateAvailabilityModal({
           />
         </Form.Item>
       ))}
+
+      <Form.Item
+        label="Dividir intervalo"
+        tooltip="Divide o período em slots iguais. Deixe vazio para criar um único intervalo."
+        validateStatus={form.formState.errors.slotDurationMinutes ? 'error' : ''}
+        help={form.formState.errors.slotDurationMinutes?.message}
+      >
+        <Controller
+          name="slotDurationMinutes"
+          control={form.control}
+          render={({ field }) => (
+            <Select
+              {...field}
+              allowClear
+              placeholder="Não dividir"
+              options={[
+                { value: 30, label: 'A cada 30 minutos' },
+                { value: 60, label: 'A cada 1 hora' },
+              ]}
+            />
+          )}
+        />
+      </Form.Item>
     </FormModal>
   )
 }

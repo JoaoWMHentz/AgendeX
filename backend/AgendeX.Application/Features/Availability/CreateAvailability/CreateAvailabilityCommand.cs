@@ -7,5 +7,6 @@ public sealed record CreateAvailabilityCommand(
     Guid AgentId,
     IReadOnlyList<WeekDay> WeekDays,
     TimeOnly StartTime,
-    TimeOnly EndTime
+    TimeOnly EndTime,
+    int? SlotDurationMinutes
 ) : IRequest<IReadOnlyList<AvailabilityDto>>;

@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { availabilityService } from '@/services/availability.service'
 import { queryKeys } from '@/shared/queryKeys'
 
-export function useAvailabilityByAgent(agentId: string | undefined) {
+export function useAvailabilityByAgent(agentId: string | undefined, weekDay?: number) {
   return useQuery({
-    queryKey: queryKeys.availability.byAgent(agentId ?? ''),
-    queryFn: () => availabilityService.getByAgent(agentId!),
+    queryKey: queryKeys.availability.byAgent(agentId ?? '', weekDay),
+    queryFn: () => availabilityService.getByAgent(agentId!, weekDay),
     enabled: !!agentId,
   })
 }

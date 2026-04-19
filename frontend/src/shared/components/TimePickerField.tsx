@@ -14,7 +14,7 @@ export function TimePickerField({
   value,
   onChange,
   format = 'HH:mm',
-  minuteStep = 5,
+  minuteStep = 15,
   popupClassName = 'compact-time-picker-popup',
   style,
   ...rest

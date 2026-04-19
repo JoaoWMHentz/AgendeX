@@ -20,6 +20,7 @@ export function useAvailabilityPageController() {
   const isAgent = me?.role === Roles.Agent
 
   const [selectedAgent, setSelectedAgent] = useState<string | undefined>()
+  const [selectedWeekDay, setSelectedWeekDay] = useState<number | undefined>()
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Availability | null>(null)
 
@@ -30,7 +31,7 @@ export function useAvailabilityPageController() {
   }, [isAgent, me?.id])
 
   const { data: agents = [] } = useAgents({ enabled: isAdmin })
-  const { data: availabilities = [], isLoading } = useAvailabilityByAgent(selectedAgent)
+  const { data: availabilities = [], isLoading } = useAvailabilityByAgent(selectedAgent, selectedWeekDay)
 
   const createAvailability = useCreateAvailability()
   const updateAvailability = useUpdateAvailability(selectedAgent ?? '')
@@ -97,6 +98,8 @@ export function useAvailabilityPageController() {
     agentOptions: agents.map((agent) => ({ value: agent.id, label: agent.name })),
     availabilities,
     isLoading,
+    selectedWeekDay,
+    setSelectedWeekDay,
     createOpen,
     openCreateModal,
     closeCreateModal,

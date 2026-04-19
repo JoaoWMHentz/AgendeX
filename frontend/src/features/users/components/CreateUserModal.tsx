@@ -1,10 +1,11 @@
-import { Grid, Modal, Form, Input, Select, DatePicker, Row, Col } from 'antd'
+import { Grid, Form, Input, Select, Row, Col } from 'antd'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import dayjs from 'dayjs'
 import { UserRole } from '../models/types'
 import { maskCpf, maskPhone } from '@/shared/utils/masks'
+import { DatePickerField } from '@/shared/components/DatePickerField'
+import { FormModal } from '@/shared/components/FormModal'
 
 const { useBreakpoint } = Grid
 
@@ -81,15 +82,14 @@ export function CreateUserModal({ open, loading, onClose, onSubmit }: CreateUser
   })
 
   return (
-    <Modal
+    <FormModal
       title="Novo usuário"
       open={open}
-      onCancel={handleCancel}
-      onOk={handleSubmit}
-      confirmLoading={loading}
+      loading={loading}
+      onClose={handleCancel}
+      onSubmit={handleSubmit}
       width={showClientFields ? 800 : 500}
     >
-      <Form layout="vertical">
         <Row gutter={[16, 16]}>
           <Col xs={24} md={showClientFields ? 12 : 24}>
             {(['name', 'email', 'password', 'confirmPassword'] as const).map((field) => (
@@ -167,12 +167,7 @@ export function CreateUserModal({ open, loading, onClose, onSubmit }: CreateUser
                     name="birthDate"
                     control={form.control}
                     render={({ field }) => (
-                      <DatePicker
-                        style={{ width: '100%' }}
-                        format="DD/MM/YYYY"
-                        value={field.value ? dayjs(field.value, 'YYYY-MM-DD') : null}
-                        onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
-                      />
+                      <DatePickerField value={field.value} onChange={field.onChange} />
                     )}
                   />
                 </Form.Item>
@@ -207,7 +202,6 @@ export function CreateUserModal({ open, loading, onClose, onSubmit }: CreateUser
             </Col>
           )}
         </Row>
-      </Form>
-    </Modal>
+    </FormModal>
   )
 }

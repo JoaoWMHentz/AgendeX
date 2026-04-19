@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { Form, Modal } from 'antd'
+import { Form } from 'antd'
 import { z } from 'zod'
 import type { Availability } from '../types'
 import { TimePickerField } from '@/shared/components/TimePickerField'
+import { FormModal } from '@/shared/components/FormModal'
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
 
@@ -52,30 +53,28 @@ export function EditAvailabilityModal({
   }
 
   return (
-    <Modal
+    <FormModal
       title="Editar disponibilidade"
       open={open}
-      onCancel={handleClose}
-      onOk={handleSubmit}
-      confirmLoading={loading}
+      loading={loading}
+      onClose={handleClose}
+      onSubmit={handleSubmit}
     >
-      <Form layout="vertical">
-        {(['startTime', 'endTime'] as const).map((fieldName) => (
-          <Form.Item
-            key={fieldName}
-            required
-            label={fieldName === 'startTime' ? 'Horário início' : 'Horário fim'}
-            validateStatus={form.formState.errors[fieldName] ? 'error' : ''}
-            help={form.formState.errors[fieldName]?.message}
-          >
-            <Controller
-              name={fieldName}
-              control={form.control}
-              render={({ field }) => <TimePickerField value={field.value} onChange={field.onChange} />}
-            />
-          </Form.Item>
-        ))}
-      </Form>
-    </Modal>
+      {(['startTime', 'endTime'] as const).map((fieldName) => (
+        <Form.Item
+          key={fieldName}
+          required
+          label={fieldName === 'startTime' ? 'Horário início' : 'Horário fim'}
+          validateStatus={form.formState.errors[fieldName] ? 'error' : ''}
+          help={form.formState.errors[fieldName]?.message}
+        >
+          <Controller
+            name={fieldName}
+            control={form.control}
+            render={({ field }) => <TimePickerField value={field.value} onChange={field.onChange} />}
+          />
+        </Form.Item>
+      ))}
+    </FormModal>
   )
 }

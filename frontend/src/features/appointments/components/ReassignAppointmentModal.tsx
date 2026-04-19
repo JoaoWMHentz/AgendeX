@@ -1,4 +1,5 @@
-import { Form, Modal, Select } from 'antd'
+import { Form, Select } from 'antd'
+import { FormModal } from '@/shared/components/FormModal'
 
 type Option = {
   value: string
@@ -25,15 +26,14 @@ export function ReassignAppointmentModal({
   onSubmit,
 }: ReassignAppointmentModalProps) {
   return (
-    <Modal
+    <FormModal
       title="Reatribuir agendamento"
       open={open}
-      onCancel={onClose}
-      onOk={onSubmit}
-      confirmLoading={loading}
+      loading={loading}
+      onClose={onClose}
+      onSubmit={onSubmit}
       okButtonProps={{ disabled: !value }}
     >
-      <Form layout="vertical">
         <Form.Item label="Novo agente" required>
           <Select
             style={{ width: '100%' }}
@@ -43,7 +43,6 @@ export function ReassignAppointmentModal({
             placeholder="Selecione um agente"
           />
         </Form.Item>
-      </Form>
-    </Modal>
+    </FormModal>
   )
 }

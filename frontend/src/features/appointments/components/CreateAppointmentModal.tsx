@@ -1,9 +1,11 @@
 import dayjs from 'dayjs'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { DatePicker, Form, Input, Modal, Select } from 'antd'
+import { Form, Input, Select } from 'antd'
 import { z } from 'zod'
 import { TimePickerField } from '@/shared/components/TimePickerField'
+import { DatePickerField } from '@/shared/components/DatePickerField'
+import { FormModal } from '@/shared/components/FormModal'
 
 const createAppointmentSchema = z.object({
   title: z.string().min(1, 'Título obrigatório'),
@@ -54,15 +56,14 @@ export function CreateAppointmentModal({
   })
 
   return (
-    <Modal
+    <FormModal
       title="Novo agendamento"
       open={open}
-      onCancel={handleClose}
-      onOk={handleSubmit}
-      confirmLoading={loading}
+      loading={loading}
+      onClose={handleClose}
+      onSubmit={handleSubmit}
       width={520}
     >
-      <Form layout="vertical">
         <Form.Item
           required
           label="Título"
@@ -118,10 +119,9 @@ export function CreateAppointmentModal({
             name="date"
             control={form.control}
             render={({ field }) => (
-              <DatePicker
-                style={{ width: '100%' }}
-                value={field.value ? dayjs(field.value) : null}
-                onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
+              <DatePickerField
+                value={field.value}
+                onChange={field.onChange}
                 disabledDate={(date) => date.isBefore(dayjs(), 'day')}
               />
             )}
@@ -148,7 +148,6 @@ export function CreateAppointmentModal({
             render={({ field }) => <Input.TextArea {...field} rows={2} />}
           />
         </Form.Item>
-      </Form>
-    </Modal>
+    </FormModal>
   )
 }

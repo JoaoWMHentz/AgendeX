@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
-import { Modal, Form, Input, Select, Switch, Divider, DatePicker } from 'antd'
+import { Form, Input, Select, Switch, Divider } from 'antd'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import dayjs from 'dayjs'
 import { UserRole, type User } from '../models/types'
 import { maskCpf, maskPhone } from '@/shared/utils/masks'
+import { DatePickerField } from '@/shared/components/DatePickerField'
+import { FormModal } from '@/shared/components/FormModal'
 
 const editSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -69,14 +70,13 @@ export function EditUserModal({
   })
 
   return (
-    <Modal
+    <FormModal
       title="Editar usuário"
       open={open}
-      onCancel={handleCancel}
-      onOk={handleSubmit}
-      confirmLoading={loading}
+      loading={loading}
+      onClose={handleCancel}
+      onSubmit={handleSubmit}
     >
-      <Form layout="vertical">
         <Form.Item
           required
           label="Nome"
@@ -141,14 +141,7 @@ export function EditUserModal({
               <Controller
                 name="birthDate"
                 control={form.control}
-                render={({ field }) => (
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    format="DD/MM/YYYY"
-                    value={field.value ? dayjs(field.value, 'YYYY-MM-DD') : null}
-                    onChange={(date) => field.onChange(date ? date.format('YYYY-MM-DD') : '')}
-                  />
-                )}
+                render={({ field }) => <DatePickerField value={field.value} onChange={field.onChange} />}
               />
             </Form.Item>
             <Form.Item label="Telefone" required>
@@ -173,7 +166,6 @@ export function EditUserModal({
             </Form.Item>
           </>
         )}
-      </Form>
-    </Modal>
+    </FormModal>
   )
 }

@@ -1,9 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { Form, Modal, Select } from 'antd'
+import { Form, Select } from 'antd'
 import { z } from 'zod'
 import { WeekDay, weekDayLabel, type WeekDayValue } from '../types'
 import { TimePickerField } from '@/shared/components/TimePickerField'
+import { FormModal } from '@/shared/components/FormModal'
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
 
@@ -57,53 +58,51 @@ export function CreateAvailabilityModal({
   })
 
   return (
-    <Modal
+    <FormModal
       title="Nova disponibilidade"
       open={open}
-      onCancel={handleCancel}
-      onOk={handleSubmit}
-      confirmLoading={loading}
+      loading={loading}
+      onClose={handleCancel}
+      onSubmit={handleSubmit}
     >
-      <Form layout="vertical">
+      <Form.Item
+        required
+        label="Agente"
+        validateStatus={form.formState.errors.agentId ? 'error' : ''}
+        help={form.formState.errors.agentId?.message}
+      >
+        <Controller
+          name="agentId"
+          control={form.control}
+          render={({ field }) => (
+            <Select {...field} options={agentOptions} placeholder="Selecione" />
+          )}
+        />
+      </Form.Item>
+
+      <Form.Item required label="Dia da semana">
+        <Controller
+          name="weekDay"
+          control={form.control}
+          render={({ field }) => <Select {...field} options={weekDayOptions} />}
+        />
+      </Form.Item>
+
+      {(['startTime', 'endTime'] as const).map((fieldName) => (
         <Form.Item
+          key={fieldName}
           required
-          label="Agente"
-          validateStatus={form.formState.errors.agentId ? 'error' : ''}
-          help={form.formState.errors.agentId?.message}
+          label={fieldName === 'startTime' ? 'Horário início' : 'Horário fim'}
+          validateStatus={form.formState.errors[fieldName] ? 'error' : ''}
+          help={form.formState.errors[fieldName]?.message}
         >
           <Controller
-            name="agentId"
+            name={fieldName}
             control={form.control}
-            render={({ field }) => (
-              <Select {...field} options={agentOptions} placeholder="Selecione" />
-            )}
+            render={({ field }) => <TimePickerField value={field.value} onChange={field.onChange} />}
           />
         </Form.Item>
-
-        <Form.Item required label="Dia da semana">
-          <Controller
-            name="weekDay"
-            control={form.control}
-            render={({ field }) => <Select {...field} options={weekDayOptions} />}
-          />
-        </Form.Item>
-
-        {(['startTime', 'endTime'] as const).map((fieldName) => (
-          <Form.Item
-            key={fieldName}
-            required
-            label={fieldName === 'startTime' ? 'Horário início' : 'Horário fim'}
-            validateStatus={form.formState.errors[fieldName] ? 'error' : ''}
-            help={form.formState.errors[fieldName]?.message}
-          >
-            <Controller
-              name={fieldName}
-              control={form.control}
-              render={({ field }) => <TimePickerField value={field.value} onChange={field.onChange} />}
-            />
-          </Form.Item>
-        ))}
-      </Form>
-    </Modal>
+      ))}
+    </FormModal>
   )
 }

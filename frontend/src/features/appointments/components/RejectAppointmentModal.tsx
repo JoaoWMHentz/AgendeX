@@ -1,4 +1,5 @@
-import { Form, Input, Modal } from 'antd'
+import { Form, Input } from 'antd'
+import { FormModal } from '@/shared/components/FormModal'
 
 type RejectAppointmentModalProps = {
   open: boolean
@@ -18,19 +19,17 @@ export function RejectAppointmentModal({
   onSubmit,
 }: RejectAppointmentModalProps) {
   return (
-    <Modal
+    <FormModal
       title="Rejeitar agendamento"
       open={open}
-      onCancel={onClose}
-      onOk={onSubmit}
-      confirmLoading={loading}
+      loading={loading}
+      onClose={onClose}
+      onSubmit={onSubmit}
       okButtonProps={{ danger: true }}
     >
-      <Form layout="vertical">
         <Form.Item label="Motivo da rejeição" required>
           <Input.TextArea rows={3} value={reason} onChange={(event) => onReasonChange(event.target.value)} />
         </Form.Item>
-      </Form>
-    </Modal>
+    </FormModal>
   )
 }

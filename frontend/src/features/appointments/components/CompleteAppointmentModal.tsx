@@ -1,4 +1,5 @@
-import { Form, Input, Modal } from 'antd'
+import { Form, Input } from 'antd'
+import { FormModal } from '@/shared/components/FormModal'
 
 type CompleteAppointmentModalProps = {
   open: boolean
@@ -18,18 +19,16 @@ export function CompleteAppointmentModal({
   onSubmit,
 }: CompleteAppointmentModalProps) {
   return (
-    <Modal
+    <FormModal
       title="Concluir agendamento"
       open={open}
-      onCancel={onClose}
-      onOk={onSubmit}
-      confirmLoading={loading}
+      loading={loading}
+      onClose={onClose}
+      onSubmit={onSubmit}
     >
-      <Form layout="vertical">
         <Form.Item label="Resumo do atendimento (opcional)">
           <Input.TextArea rows={3} value={summary} onChange={(event) => onSummaryChange(event.target.value)} />
         </Form.Item>
-      </Form>
-    </Modal>
+    </FormModal>
   )
 }

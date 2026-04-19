@@ -20,7 +20,12 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services
+            .AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddSingleton<RsaKeyProvider>();
 
         services.AddScoped<IUserRepository, UserRepository>();

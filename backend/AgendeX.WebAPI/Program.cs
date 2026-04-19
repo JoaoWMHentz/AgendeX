@@ -14,6 +14,17 @@ using System.Text.Json.Nodes;
 
 var builder = WebApplication.CreateBuilder(args);
 
+string? apiPortValue = builder.Configuration["Api:Port"];
+if (!string.IsNullOrWhiteSpace(apiPortValue))
+{
+    if (!int.TryParse(apiPortValue, out int apiPort) || apiPort is < 1 or > 65535)
+    {
+        throw new InvalidOperationException("Configuration 'Api:Port' must be a valid TCP port between 1 and 65535.");
+    }
+
+    builder.WebHost.UseUrls($"http://+:{apiPort}");
+}
+
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers().AddJsonOptions(options =>

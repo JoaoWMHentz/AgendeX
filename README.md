@@ -279,7 +279,7 @@ README.md
 O `docker-compose.yml` atual sobe o PostgreSQL 16:
 
 ```bash
-docker compose up -d db
+docker compose up -d
 ```
 
 Banco e credenciais padrão:
@@ -290,16 +290,16 @@ Banco e credenciais padrão:
 - usuário: `agendex`
 - senha: `agendex`
 
-### 2. Executar o backend
+### 2. Executar o backend localmente (opcional)
 
 ```bash
 dotnet restore backend/AgendeX.slnx
 dotnet run --project backend/AgendeX.WebAPI/AgendeX.WebAPI.csproj
 ```
 
-O backend usa por padrão a connection string configurada em `backend/AgendeX.WebAPI/appsettings.json` e expõe Swagger para exploração dos endpoints.
+Quando executado via Docker Compose, o backend recebe connection string, JWT e porta exclusivamente por variáveis de ambiente do serviço `api`.
 
-### 3. Executar o frontend
+### 3. Executar o frontend localmente (opcional)
 
 ```bash
 cd frontend
@@ -307,7 +307,7 @@ npm install
 npm run dev
 ```
 
-O frontend consome a API em `http://localhost:5150` por padrão, conforme `frontend/.env`.
+O frontend não usa arquivo `.env`. Em Docker, a URL da API é injetada em runtime pelo serviço `web` via variável `API_BASE_URL` no `docker-compose.yml`.
 
 ### 4. Testes
 
@@ -334,8 +334,8 @@ dotnet test backend/AgendeX.Tests/AgendeX.Tests.csproj
 
 ### Pontos de configuração
 
-- `backend/AgendeX.WebAPI/appsettings.json`: connection string, JWT, rate limit e CORS;
-- `frontend/.env`: URL base da API;
+- `docker-compose.yml`: variáveis de ambiente de banco, JWT, porta da API e `API_BASE_URL` do frontend;
+- `backend/AgendeX.WebAPI/appsettings.json`: configurações não sensíveis (rate limit, CORS, logging);
 - `backend/scripts/seed-auth-user.sql`: apoio para carga inicial de usuário de autenticação.
 
 ## Observações Técnicas

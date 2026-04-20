@@ -6,8 +6,22 @@ namespace AgendeX.WebAPI.Middlewares;
 
 public sealed class GlobalExceptionHandler : IExceptionHandler
 {
+    private readonly ILogger<GlobalExceptionHandler> _logger;
+
+    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    {
+        _logger = logger;
+    }
+
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken cancellationToken)
     {
+        _logger.LogError(
+            exception,
+            "Unhandled exception. Method: {Method}, Path: {Path}, TraceId: {TraceId}",
+            context.Request.Method,
+            context.Request.Path,
+            context.TraceIdentifier);
+
         ProblemDetails problem = exception switch
         {
             ValidationException ex => new ProblemDetails

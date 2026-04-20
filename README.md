@@ -274,15 +274,15 @@ README.md
 - Node.js 22+ com npm
 - Docker e Docker Compose
 
-### 1. Subir o banco de dados
+### Rodar (stack completa com Docker)
 
-O `docker-compose.yml` atual sobe o PostgreSQL 16:
+Para subir banco, backend e frontend juntos:
 
 ```bash
-docker compose up -d
+docker compose up
 ```
 
-Para criar o administrador inicial via Docker Compose, defina no arquivo `.env` (baseado em `.env.example`):
+Para criar o administrador inicial via Docker Compose, ajuste as variáveis de ambiente do serviço `api` no `docker-compose.yml`:
 
 - `ADMIN_SEED_ENABLED=true`
 - `ADMIN_SEED_NAME=Admin`
@@ -290,6 +290,14 @@ Para criar o administrador inicial via Docker Compose, defina no arquivo `.env` 
 - `ADMIN_SEED_PASSWORD=<senha-forte>`
 
 Com seed habilitado, a API cria o admin no startup de forma idempotente: se o e-mail ja existir como administrador, o processo e ignorado; se existir com outro perfil, a inicializacao falha para evitar inconsistencias.
+
+### Desenvolver (backend/frontend locais + banco em Docker)
+
+Para desenvolvimento local, suba somente o banco com Docker Compose:
+
+```bash
+docker compose up -d db
+```
 
 Banco e credenciais padrão:
 
@@ -299,7 +307,7 @@ Banco e credenciais padrão:
 - usuário: `agendex`
 - senha: `agendex`
 
-### 2. Executar o backend localmente (opcional)
+### 1. Executar o backend localmente
 
 ```bash
 dotnet restore backend/AgendeX.slnx
@@ -308,7 +316,7 @@ dotnet run --project backend/AgendeX.WebAPI/AgendeX.WebAPI.csproj
 
 Quando executado via Docker Compose, o backend recebe connection string, JWT e porta exclusivamente por variáveis de ambiente do serviço `api`.
 
-### 3. Executar o frontend localmente (opcional)
+### 2. Executar o frontend localmente
 
 ```bash
 cd frontend
@@ -318,7 +326,7 @@ npm run dev
 
 O frontend não usa arquivo `.env`. Em Docker, a URL da API é injetada em runtime pelo serviço `web` via variável `API_BASE_URL` no `docker-compose.yml`.
 
-### 4. Testes
+### 3. Testes
 
 ```bash
 dotnet test backend/AgendeX.Tests/AgendeX.Tests.csproj

@@ -1,4 +1,5 @@
 import { Typography } from 'antd'
+import { ReportsAggregates } from '../components/ReportsAggregates'
 import { ReportsFilters } from '../components/ReportsFilters'
 import { ReportsTable } from '../components/ReportsTable'
 import { useReportsPageController } from '../hooks/useReportsPageController'
@@ -10,6 +11,7 @@ export function ReportsPage() {
     filters,
     tableFilters,
     rows,
+    aggregates,
     isLoading,
     exportCsvLoading,
     exportXlsxLoading,
@@ -50,6 +52,8 @@ export function ReportsPage() {
         onExportCsv={handleExportCsv}
         onExportXlsx={handleExportXlsx}
       />
+
+      <ReportsAggregates aggregates={aggregates} />
 
       <ReportsTable
         rows={rows}

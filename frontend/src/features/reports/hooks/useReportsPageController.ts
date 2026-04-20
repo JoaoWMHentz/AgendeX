@@ -96,6 +96,7 @@ export function useReportsPageController() {
   }
 
   const rows = data?.rows ?? []
+  const aggregates = data?.aggregates ?? []
   const tableFilters = appliedFilters ?? draftFilters
 
   const statusOptions = useMemo(
@@ -135,6 +136,7 @@ export function useReportsPageController() {
     filters: draftFilters,
     tableFilters,
     rows,
+    aggregates,
     isLoading,
     exportCsvLoading: exportCsvMutation.isPending,
     exportXlsxLoading: exportXlsxMutation.isPending,

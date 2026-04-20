@@ -17,5 +17,42 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: ./backend
+      dockerfile: AgendeX.WebAPI/Dockerfile
+    container_name: agendex-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Api__Port: 5150
+      ConnectionStrings__Default: Host=db;Port=5432;Database=agendex;Username=agendex;Password=agendex
+      Jwt__Issuer: AgendeX
+      Jwt__Audience: AgendeX.Clients
+      Jwt__AccessTokenMinutes: 15
+      Jwt__RefreshTokenDays: 7
+      AdminSeed__Enabled: true
+      AdminSeed__Name: Admin
+      AdminSeed__Email: admin@agendex.local
+      AdminSeed__Password: CRIAR_SENHA_ADMIN
+    ports:
+      - "5150:5150"
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agendex-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      API_BASE_URL: http://localhost:5150
+    ports:
+      - "5173:80"
+
 volumes:
   agendex_pgdata:

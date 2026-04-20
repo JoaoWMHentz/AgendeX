@@ -2,7 +2,8 @@ import axios from 'axios'
 import { tokenStorage } from './tokenStorage'
 import type { AuthResponse } from '@/features/auth/types'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5150'
+const runtimeApiBaseUrl = window.__APP_CONFIG__?.API_BASE_URL
+const BASE_URL = runtimeApiBaseUrl ?? 'http://localhost:5150'
 
 export const api = axios.create({
   baseURL: BASE_URL,

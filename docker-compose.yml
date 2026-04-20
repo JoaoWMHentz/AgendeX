@@ -34,7 +34,7 @@ services:
       Jwt__Audience: AgendeX.Clients
       Jwt__AccessTokenMinutes: 15
       Jwt__RefreshTokenDays: 7
-      AdminSeed__Enabled: true
+      AdminSeed__Enabled: "true"
       AdminSeed__Name: Admin
       AdminSeed__Email: admin@agendex.local
       AdminSeed__Password: CRIAR_SENHA_ADMIN

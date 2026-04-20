@@ -282,6 +282,15 @@ O `docker-compose.yml` atual sobe o PostgreSQL 16:
 docker compose up -d
 ```
 
+Para criar o administrador inicial via Docker Compose, defina no arquivo `.env` (baseado em `.env.example`):
+
+- `ADMIN_SEED_ENABLED=true`
+- `ADMIN_SEED_NAME=Admin`
+- `ADMIN_SEED_EMAIL=admin@agendex.local`
+- `ADMIN_SEED_PASSWORD=<senha-forte>`
+
+Com seed habilitado, a API cria o admin no startup de forma idempotente: se o e-mail ja existir como administrador, o processo e ignorado; se existir com outro perfil, a inicializacao falha para evitar inconsistencias.
+
 Banco e credenciais padrão:
 
 - host: `localhost`

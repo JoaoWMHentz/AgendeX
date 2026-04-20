@@ -3,6 +3,7 @@ using AgendeX.Infrastructure;
 using AgendeX.Infrastructure.Identity;
 using AgendeX.Infrastructure.Persistence;
 using AgendeX.WebAPI.Middlewares;
+using AgendeX.WebAPI.Services;
 using AgendeX.WebAPI.Serialization;
 using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,6 +14,8 @@ using Microsoft.OpenApi;
 using System.Text.Json.Nodes;
 
 var builder = WebApplication.CreateBuilder(args);
+
+ApplyDevelopmentJwtFallback(builder);
 
 string? apiPortValue = builder.Configuration["Api:Port"];
 if (!string.IsNullOrWhiteSpace(apiPortValue))
@@ -82,6 +85,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AgendeX.Application.Common.Interfaces.ICurrentUserService, AgendeX.WebAPI.Services.CurrentUserService>();
+builder.Services.AddScoped<AdminSeedService>();
+builder.Services.AddOptions<AdminSeedOptions>()
+    .Bind(builder.Configuration.GetSection(AdminSeedOptions.SectionName));
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -118,6 +124,9 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.Migrate();
+
+    AdminSeedService adminSeedService = scope.ServiceProvider.GetRequiredService<AdminSeedService>();
+    await adminSeedService.SeedAsync();
 }
 
 if (app.Environment.IsDevelopment())
@@ -137,3 +146,24 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static void ApplyDevelopmentJwtFallback(WebApplicationBuilder builder)
+{
+    if (!builder.Environment.IsDevelopment())
+    {
+        return;
+    }
+
+    string? jwtIssuer = builder.Configuration["Jwt:Issuer"];
+    string? jwtAudience = builder.Configuration["Jwt:Audience"];
+
+    if (!string.IsNullOrWhiteSpace(jwtIssuer) && !string.IsNullOrWhiteSpace(jwtAudience))
+    {
+        return;
+    }
+
+    builder.Configuration["Jwt:Issuer"] = builder.Configuration["JWT_ISSUER"] ?? "AgendeX";
+    builder.Configuration["Jwt:Audience"] = builder.Configuration["JWT_AUDIENCE"] ?? "AgendeX.Clients";
+    builder.Configuration["Jwt:AccessTokenMinutes"] = builder.Configuration["JWT_ACCESS_TOKEN_MINUTES"] ?? "15";
+    builder.Configuration["Jwt:RefreshTokenDays"] = builder.Configuration["JWT_REFRESH_TOKEN_DAYS"] ?? "7";
+}

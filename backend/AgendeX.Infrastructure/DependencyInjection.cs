@@ -14,8 +14,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        string connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException("Connection string 'Default' was not found.");
+        string? configuredConnectionString = configuration.GetConnectionString("Default");
+
+        string connectionString = string.IsNullOrWhiteSpace(configuredConnectionString)
+            ? BuildLocalPostgresConnectionString(configuration)
+            : configuredConnectionString;
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString));
@@ -40,5 +43,16 @@ public static class DependencyInjection
         services.AddScoped<IReportExportService, ReportExportService>();
 
         return services;
+    }
+
+    private static string BuildLocalPostgresConnectionString(IConfiguration configuration)
+    {
+        string host = configuration["POSTGRES_HOST"] ?? "localhost";
+        string port = configuration["POSTGRES_PORT"] ?? "5432";
+        string database = configuration["POSTGRES_DB"] ?? "agendex";
+        string username = configuration["POSTGRES_USER"] ?? "agendex";
+        string password = configuration["POSTGRES_PASSWORD"] ?? "agendex";
+
+        return $"Host={host};Port={port};Database={database};Username={username};Password={password}";
     }
 }

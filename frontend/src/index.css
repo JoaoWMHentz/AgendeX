@@ -175,7 +175,7 @@ html[style*='color-scheme: dark'] .app-liquid-sider {
   box-shadow: none;
   backdrop-filter: blur(20px) saturate(130%);
   -webkit-backdrop-filter: blur(20px) saturate(130%);
-  inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 html:not([style*='color-scheme: dark']) .ant-table-wrapper {

@@ -282,14 +282,25 @@ Para subir banco, backend e frontend juntos:
 docker compose up
 ```
 
-Para criar o administrador inicial via Docker Compose, ajuste as variáveis de ambiente do serviço `api` no `docker-compose.yml`:
+Para criar o primeiro usuario administrador de forma simples, execute o SQL de apoio no root do repositorio:
 
-- `ADMIN_SEED_ENABLED=true`
-- `ADMIN_SEED_NAME=Admin`
-- `ADMIN_SEED_EMAIL=admin@agendex.local`
-- `ADMIN_SEED_PASSWORD=<senha-forte>`
+```bash
+docker compose exec -T db psql -U agendex -d agendex < seed-admin.sql
+```
 
-Com seed habilitado, a API cria o admin no startup de forma idempotente: se o e-mail ja existir como administrador, o processo e ignorado; se existir com outro perfil, a inicializacao falha para evitar inconsistencias.
+Credenciais padrao do script:
+
+- email: admin@agendex.local
+- senha: Teste_123
+
+Opcionalmente, voce tambem pode usar o seed automatico da API no startup, configurando as variaveis do servico api no docker-compose.yml:
+
+- AdminSeed__Enabled=true
+- AdminSeed__Name=Admin
+- AdminSeed__Email=admin@agendex.local
+- AdminSeed__Password=<senha-forte>
+
+Observacao: o seed da API e idempotente e nao redefine senha quando o usuario ja existe.
 
 ### Desenvolver (backend/frontend locais + banco em Docker)
 
@@ -353,7 +364,7 @@ dotnet test backend/AgendeX.Tests/AgendeX.Tests.csproj
 
 - `docker-compose.yml`: variáveis de ambiente de banco, JWT, porta da API e `API_BASE_URL` do frontend;
 - `backend/AgendeX.WebAPI/appsettings.json`: configurações não sensíveis (rate limit, CORS, logging);
-- `backend/scripts/seed-auth-user.sql`: apoio para carga inicial de usuário de autenticação.
+- `seed-admin.sql`: apoio para criacao do primeiro usuario administrador.
 
 ## Observações Técnicas
 

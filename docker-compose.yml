@@ -37,7 +37,7 @@ services:
       AdminSeed__Enabled: "true"
       AdminSeed__Name: Admin
       AdminSeed__Email: admin@agendex.local
-      AdminSeed__Password: CRIAR_SENHA_ADMIN
+      AdminSeed__Password: criar@123
     ports:
       - "5150:5150"
 

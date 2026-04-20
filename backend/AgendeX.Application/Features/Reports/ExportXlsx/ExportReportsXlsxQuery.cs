@@ -27,7 +27,8 @@ public sealed class ExportReportsXlsxQueryHandler : IRequestHandler<ExportReport
     public async Task<ReportFileDto> Handle(ExportReportsXlsxQuery request, CancellationToken cancellationToken)
     {
         IReadOnlyList<ReportRowDto> rows = await GetRowsAsync(request.Filters, cancellationToken);
-        byte[] content = _reportExportService.BuildXlsx(rows);
+        IReadOnlyList<ReportAggregateDto> aggregates = ReportProcessing.BuildAggregates(rows, request.Filters.ReportType);
+        byte[] content = _reportExportService.BuildXlsx(aggregates, rows);
 
         return new ReportFileDto(
             ReportProcessing.BuildFileName("xlsx"),

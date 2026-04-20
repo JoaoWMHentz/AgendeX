@@ -291,7 +291,7 @@ docker compose exec -T db psql -U agendex -d agendex < seed-admin.sql
 Credenciais padrao do script:
 
 - email: admin@agendex.local
-- senha: Teste_123
+- senha: Senha@123
 
 Opcionalmente, voce tambem pode usar o seed automatico da API no startup, configurando as variaveis do servico api no docker-compose.yml:
 

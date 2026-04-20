@@ -31,7 +31,11 @@ export function useAvailabilityPageController() {
   }, [isAgent, me?.id])
 
   const { data: agents = [] } = useAgents({ enabled: isAdmin })
-  const { data: availabilities = [], isLoading } = useAvailabilityByAgent(selectedAgent, selectedWeekDay)
+  const {
+    data: availabilities = [],
+    isLoading,
+    refetch: refreshAvailabilities,
+  } = useAvailabilityByAgent(selectedAgent, selectedWeekDay)
 
   const createAvailability = useCreateAvailability()
   const updateAvailability = useUpdateAvailability(selectedAgent ?? '')
@@ -100,6 +104,7 @@ export function useAvailabilityPageController() {
     isLoading,
     selectedWeekDay,
     setSelectedWeekDay,
+    onRefresh: refreshAvailabilities,
     createOpen,
     openCreateModal,
     closeCreateModal,

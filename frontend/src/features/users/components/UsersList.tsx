@@ -1,7 +1,7 @@
 import { Table, Button, Tag, Space, Select, Typography, Popconfirm } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { userRoleLabel, userRoleOptions, UserRole, type User, type UserRoleValue } from '../models/types'
+import { userRoleLabel, userRoleOptions, type User, type UserRoleValue } from '../models/types'
 
 const { Title } = Typography
 

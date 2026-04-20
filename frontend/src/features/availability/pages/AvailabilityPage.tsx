@@ -14,6 +14,7 @@ export function AvailabilityPage() {
     agentOptions,
     availabilities,
     isLoading,
+    onRefresh,
     createOpen,
     openCreateModal,
     closeCreateModal,
@@ -40,6 +41,7 @@ export function AvailabilityPage() {
         onAgentChange={setSelectedAgent}
         onWeekDayChange={setSelectedWeekDay}
         onOpenCreate={openCreateModal}
+        onRefresh={onRefresh}
         onEdit={openEditModal}
         onDelete={handleDelete}
       />

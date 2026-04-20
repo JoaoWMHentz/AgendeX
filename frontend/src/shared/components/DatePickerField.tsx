@@ -18,6 +18,11 @@ export function DatePickerField({
   ...rest
 }: DatePickerFieldProps) {
   const parsedValue: Dayjs | null = value ? dayjs(value, valueFormat) : null
+  const handleChange: NonNullable<DatePickerProps['onChange']> = (nextValue) => {
+    const selectedValue = nextValue as Dayjs | null
+
+    onChange(selectedValue ? selectedValue.format(valueFormat) : '')
+  }
 
   return (
     <DatePicker
@@ -25,7 +30,7 @@ export function DatePickerField({
       style={{ width: '100%', ...style }}
       format={displayFormat}
       value={parsedValue}
-      onChange={(nextValue) => onChange(nextValue ? nextValue.format(valueFormat) : '')}
+      onChange={handleChange}
     />
   )
 }
